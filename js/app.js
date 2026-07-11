@@ -1,0 +1,584 @@
+/* globals TOPICS, getTopic, loadState, saveState, ensureDayRollover, recordSession, resetProgress, todayStr, generateSession */
+
+var state = null;
+var session = null; // { topicId, level, questions, index, correct, stars }
+
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => [...document.querySelectorAll(sel)];
+
+function showScreen(id) {
+  $$(".screen").forEach((s) => s.classList.remove("active"));
+  const el = $(`#screen-${id}`);
+  if (el) el.classList.add("active");
+  try {
+    if (window.scrollTo) window.scrollTo({ top: 0, behavior: "smooth" });
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.hidden = false;
+  t.classList.add("show");
+  clearTimeout(toast._timer);
+  toast._timer = setTimeout(() => {
+    t.classList.remove("show");
+    t.hidden = true;
+  }, 2200);
+}
+
+function playTone(ok) {
+  if (!state.sound) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g);
+    g.connect(ctx.destination);
+    o.frequency.value = ok ? 660 : 220;
+    o.type = ok ? "sine" : "triangle";
+    g.gain.value = 0.08;
+    o.start();
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+    o.stop(ctx.currentTime + 0.26);
+  } catch {
+    /* ignore */
+  }
+}
+
+function confettiBurst() {
+  // lightweight CSS confetti via temporary nodes
+  const wrap = document.createElement("div");
+  wrap.className = "confetti-wrap";
+  for (let i = 0; i < 24; i++) {
+    const p = document.createElement("span");
+    p.className = "confetti";
+    p.style.setProperty("--x", `${uiRand(-120, 120)}px`);
+    p.style.setProperty("--d", `${uiRand(400, 900)}ms`);
+    p.style.setProperty("--h", `${uiRand(0, 360)}deg`);
+    p.style.left = `${50 + uiRand(-20, 20)}%`;
+    wrap.appendChild(p);
+  }
+  document.body.appendChild(wrap);
+  setTimeout(() => wrap.remove(), 1000);
+}
+
+function uiRand(a, b) {
+  return Math.floor(Math.random() * (b - a + 1)) + a;
+}
+
+// ——— Home ———
+function renderHome() {
+  state = ensureDayRollover(loadState());
+  const name = state.childName?.trim();
+  $("#greeting").textContent = name ? `Xin chào ${name}!` : "Xin chào bé!";
+  const hour = new Date().getHours();
+  const msgs = [
+    "Hôm nay mình luyện Toán nhé?",
+    "Mỗi ngày một chút, bé sẽ giỏi hơn!",
+    "Thử thách hôm nay đang chờ bé đó!",
+    hour < 12 ? "Buổi sáng vui vẻ — làm vài câu nhé!" : "Cùng ôn Toán nào!",
+  ];
+  $("#hero-msg").textContent = msgs[uiRand(0, msgs.length - 1)];
+
+  $("#stat-streak").textContent = state.streak;
+  $("#stat-stars").textContent = state.stars;
+  $("#stat-done").textContent = state.todaySessions;
+
+  const homeName = $("#home-child-name");
+  if (homeName && document.activeElement !== homeName) {
+    homeName.value = state.childName || "";
+  }
+
+  const dailyDone = state.dailyCompletedDate === todayStr();
+  const prog = Math.min(100, Math.round(((state.dailyCorrectToday || 0) / state.dailyGoal) * 100));
+  $("#daily-fill").style.width = `${prog}%`;
+  $("#daily-progress-text").textContent = dailyDone
+    ? `Hoàn thành! +5⭐ thưởng`
+    : `${state.dailyCorrectToday || 0} / ${state.dailyGoal} câu đúng`;
+  $("#btn-daily").textContent = dailyDone ? "Luyện thêm 🌟" : "Bắt đầu thử thách 🚀";
+  $("#daily-title").textContent = "10 câu · Hỗn hợp (Cơ bản + Nâng cao)";
+
+  const grid = $("#topic-grid");
+  grid.innerHTML = TOPICS.map(
+    (t) => `
+    <button type="button" class="topic-card" data-topic="${t.id}" style="--accent:${t.color}">
+      <span class="topic-emoji">${t.emoji}</span>
+      <span class="topic-name">${t.name}</span>
+      <span class="topic-desc">${t.desc}</span>
+    </button>`
+  ).join("");
+
+  grid.querySelectorAll(".topic-card").forEach((btn) => {
+    btn.addEventListener("click", () => openDiff(btn.dataset.topic));
+  });
+}
+
+function openDiff(topicId) {
+  session = { topicId, level: null, questions: [], index: 0, correct: 0, stars: 0 };
+  const topic = getTopic(topicId);
+  $("#diff-topic-name").textContent = `${topic.emoji} ${topic.name}`;
+  showScreen("diff");
+}
+
+function startPractice(topicId, level, count) {
+  const questions = generateSession(topicId, level, count);
+  session = {
+    topicId,
+    level,
+    questions,
+    index: 0,
+    correct: 0,
+    stars: 0,
+    answered: false,
+  };
+  const topic = getTopic(topicId);
+  $("#practice-label").textContent =
+    `${topic.emoji} ${level === "basic" ? "Cơ bản" : "Nâng cao"}`;
+  $("#score-pill").textContent = "⭐ 0";
+  showScreen("practice");
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const { questions, index } = session;
+  const total = questions.length;
+  const item = questions[index];
+  session.answered = false;
+
+  $("#q-fill").style.width = `${(index / total) * 100}%`;
+  $("#q-counter").textContent = `${index + 1} / ${total}`;
+
+  const topic = getTopic(item.topicId);
+  $("#q-topic-tag").textContent = `${topic.emoji} ${topic.name}`;
+  $("#q-text").textContent = item.text;
+
+  const visual = $("#q-visual");
+  if (item.visual) {
+    visual.hidden = false;
+    visual.innerHTML = item.visual;
+  } else {
+    visual.hidden = true;
+    visual.innerHTML = "";
+  }
+
+  const area = $("#answer-area");
+  area.innerHTML = "";
+  $("#feedback").hidden = true;
+  $("#feedback").className = "feedback";
+  $("#btn-check").hidden = true;
+  $("#btn-next").hidden = true;
+  $("#encourage").textContent = "";
+
+  const card = $("#question-card");
+  card.classList.remove("shake", "pop");
+  void card.offsetWidth;
+  card.classList.add("pop");
+
+  if (item.type === "mc" && item.options) {
+    const opts = item.options;
+    area.className = "answer-area mc-grid";
+    opts.forEach((opt) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "opt-btn";
+      b.textContent = opt;
+      b.dataset.value = opt;
+      b.addEventListener("click", () => {
+        if (session.answered) return;
+        area.querySelectorAll(".opt-btn").forEach((x) => x.classList.remove("selected"));
+        b.classList.add("selected");
+        checkAnswer(opt);
+      });
+      area.appendChild(b);
+    });
+  } else {
+    area.className = "answer-area input-area";
+    const input = document.createElement("input");
+    input.type = "text";
+    input.inputMode = "numeric";
+    input.autocomplete = "off";
+    input.id = "answer-input";
+    input.placeholder = "Nhập đáp án...";
+    input.setAttribute("aria-label", "Đáp án");
+    area.appendChild(input);
+    $("#btn-check").hidden = false;
+    setTimeout(() => input.focus(), 100);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitInput();
+      }
+    });
+  }
+}
+
+function normalizeAnswer(s) {
+  return String(s)
+    .trim()
+    .replace(/\s+/g, "")
+    .replace(/,/g, "")
+    .replace(/\./g, "")
+    .toLowerCase();
+}
+
+function submitInput() {
+  if (session.answered) return;
+  const input = $("#answer-input");
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) {
+    toast("Bé hãy nhập đáp án nhé!");
+    input.focus();
+    return;
+  }
+  checkAnswer(val);
+}
+
+function checkAnswer(userRaw) {
+  if (session.answered) return;
+  session.answered = true;
+
+  const item = session.questions[session.index];
+  const ok = normalizeAnswer(userRaw) === normalizeAnswer(item.answer);
+
+  if (ok) {
+    session.correct += 1;
+    const gain = session.level === "advanced" ? 2 : 1;
+    session.stars += gain;
+    $("#score-pill").textContent = `⭐ ${session.stars}`;
+    playTone(true);
+    showFeedback(true, item);
+    $("#encourage").textContent = uiPick([
+      "Giỏi quá! 🌟",
+      "Đúng rồi! Bé tuyệt lắm!",
+      "Xuất sắc! 💪",
+      "Hay lắm! Tiếp tục nào!",
+      "Chính xác 100%! 🎉",
+    ]);
+  } else {
+    playTone(false);
+    showFeedback(false, item);
+    $("#encourage").textContent = uiPick([
+      "Chưa đúng — xem gợi ý rồi làm câu sau nhé!",
+      "Không sao, sai là để học thêm! 💙",
+      "Cố lên, câu sau sẽ tốt hơn!",
+    ]);
+    $("#question-card").classList.add("shake");
+  }
+
+  // disable options
+  $$(".opt-btn").forEach((b) => {
+    b.disabled = true;
+    if (normalizeAnswer(b.dataset.value) === normalizeAnswer(item.answer)) {
+      b.classList.add("correct");
+    } else if (b.classList.contains("selected")) {
+      b.classList.add("wrong");
+    }
+  });
+  const input = $("#answer-input");
+  if (input) input.disabled = true;
+
+  $("#btn-check").hidden = true;
+  $("#btn-next").hidden = false;
+  $("#btn-next").textContent =
+    session.index + 1 >= session.questions.length ? "Xem kết quả 🏆" : "Câu tiếp →";
+
+  $("#q-fill").style.width = `${((session.index + 1) / session.questions.length) * 100}%`;
+
+  // Hiện highlight đáp án trên hình (nếu có) — chỉ sau khi bé đã chọn
+  if (item.visualAfter) {
+    const vis = $("#q-visual");
+    if (vis) {
+      vis.hidden = false;
+      vis.innerHTML = item.visualAfter;
+    }
+  }
+}
+
+function showFeedback(ok, item) {
+  const fb = $("#feedback");
+  fb.hidden = false;
+  fb.className = `feedback ${ok ? "ok" : "bad"}`;
+  fb.innerHTML = ok
+    ? `<strong>Đúng rồi!</strong> ${item.explain || ""}`
+    : `<strong>Đáp án đúng: ${item.answer}</strong><br/>${item.explain || ""}`;
+}
+
+function nextQuestion() {
+  if (session.index + 1 >= session.questions.length) {
+    finishSession();
+    return;
+  }
+  session.index += 1;
+  renderQuestion();
+}
+
+function finishSession() {
+  const total = session.questions.length;
+  const correct = session.correct;
+  const starsEarned = session.stars;
+  const pct = Math.round((correct / total) * 100);
+
+  state = recordSession(state, {
+    topicId: session.topicId,
+    level: session.level,
+    correct,
+    total,
+    starsEarned,
+  });
+
+  let title, emoji, msg;
+  if (pct === 100) {
+    emoji = "🏆";
+    title = "Hoàn hảo!";
+    msg = "Bé trả lời đúng hết — siêu đỉnh!";
+    confettiBurst();
+  } else if (pct >= 80) {
+    emoji = "🎉";
+    title = "Tuyệt vời!";
+    msg = "Bé làm rất tốt. Cố gắng thêm chút nữa là 100%!";
+    confettiBurst();
+  } else if (pct >= 50) {
+    emoji = "💪";
+    title = "Cố gắng tốt!";
+    msg = "Đã nắm được nhiều phần. Luyện thêm để chắc hơn nhé!";
+  } else {
+    emoji = "🌱";
+    title = "Cùng luyện tiếp!";
+    msg = "Mỗi lần luyện là một bước tiến. Chọn Cơ bản để vững nền nhé!";
+  }
+
+  $("#result-emoji").textContent = emoji;
+  $("#result-title").textContent = title;
+  $("#result-msg").textContent = msg;
+  $("#result-correct").textContent = correct;
+  $("#result-total").textContent = total;
+  $("#result-stars").textContent = `+${starsEarned}`;
+  $("#result-pct").textContent = `${pct}%`;
+
+  const starsRow = $("#result-stars-row");
+  const starCount = pct >= 90 ? 3 : pct >= 70 ? 2 : pct >= 40 ? 1 : 0;
+  starsRow.innerHTML = Array.from({ length: 3 }, (_, i) =>
+    i < starCount ? "⭐" : "☆"
+  ).join("");
+
+  session._last = { topicId: session.topicId, level: session.level, count: total };
+  showScreen("result");
+}
+
+function uiPick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// ——— Progress ———
+function renderProgress() {
+  state = ensureDayRollover(loadState());
+  const s = state;
+  $("#progress-summary").innerHTML = `
+    <div class="psum-card"><span>🔥</span><strong>${s.streak}</strong><em>ngày streak</em></div>
+    <div class="psum-card"><span>⭐</span><strong>${s.stars}</strong><em>tổng sao</em></div>
+    <div class="psum-card"><span>📚</span><strong>${s.history.length}</strong><em>lần gần đây</em></div>
+    <div class="psum-card"><span>✅</span><strong>${s.todaySessions}</strong><em>hôm nay</em></div>
+  `;
+
+  const list = $("#topic-progress-list");
+  list.innerHTML = TOPICS.map((t) => {
+    const p = s.byTopic[t.id];
+    if (!p || !p.total) {
+      return `<div class="tp-row">
+        <span class="tp-emoji">${t.emoji}</span>
+        <div class="tp-info"><strong>${t.name}</strong><span>Chưa luyện</span></div>
+        <div class="tp-bar"><div class="fill" style="width:0%"></div></div>
+      </div>`;
+    }
+    const pct = Math.round((p.correct / p.total) * 100);
+    return `<div class="tp-row">
+      <span class="tp-emoji">${t.emoji}</span>
+      <div class="tp-info">
+        <strong>${t.name}</strong>
+        <span>${p.correct}/${p.total} đúng · ${pct}% · CB ${p.basic} · NC ${p.advanced}</span>
+      </div>
+      <div class="tp-bar"><div class="fill" style="width:${pct}%;background:${t.color}"></div></div>
+    </div>`;
+  }).join("");
+}
+
+// ——— Settings ———
+function renderSettings() {
+  $("#child-name").value = state.childName || "";
+  $("#opt-sound").checked = state.sound !== false;
+}
+
+// ——— Events ———
+function bindEvents() {
+  $$("[data-back]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const to = btn.dataset.back;
+      if (to === "home") {
+        renderHome();
+        showScreen("home");
+      }
+    });
+  });
+
+  $("#btn-settings").addEventListener("click", () => {
+    renderSettings();
+    showScreen("settings");
+  });
+
+  $("#btn-progress").addEventListener("click", () => {
+    renderProgress();
+    showScreen("progress");
+  });
+
+  $("#btn-daily").addEventListener("click", () => {
+    // daily: 5 cơ bản + 5 nâng cao, gộp rồi lọc trùng
+    const basicQs = generateSession("hon-hop", "basic", 5);
+    const advQs = generateSession("hon-hop", "advanced", 5);
+    const seen = {};
+    const questions = [];
+    basicQs.concat(advQs).forEach(function (item) {
+      var k =
+        typeof questionKey === "function"
+          ? questionKey(item)
+          : String(item.text) + "||" + String(item.answer);
+      if (seen[k]) return;
+      seen[k] = true;
+      questions.push(item);
+    });
+    // nếu thiếu do lọc trùng, bù thêm
+    var guard = 0;
+    while (questions.length < 10 && guard < 80) {
+      guard++;
+      var extra = generateSession("hon-hop", Math.random() < 0.5 ? "basic" : "advanced", 1)[0];
+      var ek =
+        typeof questionKey === "function"
+          ? questionKey(extra)
+          : String(extra.text) + "||" + String(extra.answer);
+      if (seen[ek]) continue;
+      seen[ek] = true;
+      questions.push(extra);
+    }
+    // xáo trộn
+    for (var i = questions.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = questions[i];
+      questions[i] = questions[j];
+      questions[j] = tmp;
+    }
+    session = {
+      topicId: "hon-hop",
+      level: "basic",
+      questions: questions,
+      index: 0,
+      correct: 0,
+      stars: 0,
+      answered: false,
+      isDaily: true,
+    };
+    $("#practice-label").textContent = "🎯 Thử thách hôm nay";
+    $("#score-pill").textContent = "⭐ 0";
+    showScreen("practice");
+    renderQuestion();
+  });
+
+  $$(".diff-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      const level = card.dataset.level;
+      const count = Number($("#q-count").value) || 10;
+      startPractice(session.topicId, level, count);
+    });
+  });
+
+  $("#btn-check").addEventListener("click", submitInput);
+  $("#btn-next").addEventListener("click", nextQuestion);
+
+  $("#btn-quit").addEventListener("click", () => {
+    if (confirm("Thoát buổi luyện? Tiến độ buổi này sẽ không được lưu.")) {
+      renderHome();
+      showScreen("home");
+    }
+  });
+
+  $("#btn-again").addEventListener("click", () => {
+    const last = session?._last;
+    if (last) {
+      startPractice(last.topicId, last.level, last.count);
+    } else {
+      renderHome();
+      showScreen("home");
+    }
+  });
+
+  $("#btn-home").addEventListener("click", () => {
+    renderHome();
+    showScreen("home");
+  });
+
+  function saveChildName(fromEl) {
+    const val = (fromEl?.value || "").trim().slice(0, 20);
+    state.childName = val;
+    saveState(state);
+    const other = fromEl?.id === "home-child-name" ? $("#child-name") : $("#home-child-name");
+    if (other) other.value = val;
+    $("#greeting").textContent = val ? `Xin chào ${val}!` : "Xin chào bé!";
+    toast(val ? `Đã lưu tên: ${val}` : "Đã xóa tên");
+  }
+
+  $("#child-name").addEventListener("change", () => saveChildName($("#child-name")));
+  $("#home-child-name")?.addEventListener("change", () => saveChildName($("#home-child-name")));
+  $("#btn-save-name")?.addEventListener("click", () => saveChildName($("#home-child-name")));
+
+  $("#opt-sound").addEventListener("change", () => {
+    state.sound = $("#opt-sound").checked;
+    saveState(state);
+  });
+
+  $("#btn-reset-progress").addEventListener("click", () => {
+    if (confirm("Xóa toàn bộ sao, streak và lịch sử luyện tập?")) {
+      state = resetProgress();
+      renderProgress();
+      toast("Đã xóa dữ liệu luyện tập");
+    }
+  });
+}
+
+// boot — chạy khi DOM sẵn sàng
+function boot() {
+  try {
+    if (typeof TOPICS === "undefined" || !TOPICS || !TOPICS.length) {
+      throw new Error("Không tải được danh sách chủ đề (TOPICS).");
+    }
+    if (typeof generateSession !== "function") {
+      throw new Error("Không tải được bộ câu hỏi.");
+    }
+    if (typeof loadState !== "function") {
+      throw new Error("Không tải được bộ nhớ.");
+    }
+    state = ensureDayRollover(loadState());
+    bindEvents();
+    renderHome();
+    showScreen("home");
+    var ok = document.getElementById("boot-ok");
+    if (ok) ok.hidden = false;
+  } catch (err) {
+    console.error(err);
+    var el = document.getElementById("boot-error");
+    if (el) {
+      el.hidden = false;
+      el.textContent =
+        "Lỗi tải app: " +
+        (err && err.message ? err.message : String(err)) +
+        " — Hãy mở file ToanLop3.html bằng Chrome (double-click).";
+    }
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", boot);
+} else {
+  boot();
+}
