@@ -826,6 +826,15 @@ body {
   gap: 10px;
 }
 
+.result-email-status {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin: 0 0 14px;
+  line-height: 1.4;
+  padding: 0 4px;
+}
+
 /* Progress */
 .progress-summary {
   display: grid;

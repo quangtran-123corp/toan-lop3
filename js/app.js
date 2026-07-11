@@ -326,13 +326,16 @@ function finishSession() {
   const starsEarned = session.stars;
   const pct = Math.round((correct / total) * 100);
 
-  state = recordSession(state, {
+  const recorded = recordSession(state, {
     topicId: session.topicId,
     level: session.level,
     correct,
     total,
     starsEarned,
   });
+  // Tương thích: recordSession trả { state, events }
+  const events = recorded && recorded.events ? recorded.events : {};
+  state = recorded && recorded.state ? recorded.state : recorded;
 
   let title, emoji, msg;
   if (pct === 100) {
@@ -370,6 +373,60 @@ function finishSession() {
   starsRow.innerHTML = Array.from({ length: 3 }, (_, i) =>
     i < starCount ? "⭐" : "☆"
   ).join("");
+
+  // Dòng trạng thái gửi email cho bố
+  let emailLine = $("#result-email-status");
+  if (!emailLine) {
+    emailLine = document.createElement("p");
+    emailLine.id = "result-email-status";
+    emailLine.className = "result-email-status";
+    const card = document.querySelector(".result-card");
+    const actions = document.querySelector(".result-actions");
+    if (card && actions) card.insertBefore(emailLine, actions);
+    else if (card) card.appendChild(emailLine);
+  }
+  emailLine.textContent = "";
+  emailLine.hidden = true;
+
+  // Gửi email khi hoàn thành streak / ngày luyện mới
+  if (window.EmailReport && typeof EmailReport.sendStreakReport === "function") {
+    const willSend =
+      state.emailNotify !== false &&
+      (events.dailyCompleted || events.streakIncreased || state.emailEverySession);
+    if (willSend) {
+      emailLine.hidden = false;
+      emailLine.textContent =
+        "📧 Đang gửi kết quả cho bố (" +
+        (state.parentEmail || EmailReport.DEFAULT_EMAIL) +
+        ")…";
+      EmailReport.sendStreakReport(
+        state,
+        {
+          topicId: session.topicId,
+          level: session.level,
+          correct,
+          total,
+          starsEarned,
+        },
+        events
+      ).then(function (res) {
+        if (!emailLine) return;
+        if (res && res.skipped) {
+          emailLine.hidden = true;
+          return;
+        }
+        if (res && res.ok) {
+          emailLine.textContent =
+            "✅ Đã gửi kết quả về email bố: " +
+            (state.parentEmail || EmailReport.DEFAULT_EMAIL);
+          toast("Đã gửi kết quả cho bố 📧");
+        } else {
+          emailLine.textContent =
+            "⚠️ Chưa gửi được email. Lần đầu bố hãy kiểm tra hộp thư (kể cả Spam) và bấm xác nhận FormSubmit.";
+        }
+      });
+    }
+  }
 
   session._last = { topicId: session.topicId, level: session.level, count: total };
   showScreen("result");
@@ -416,6 +473,17 @@ function renderProgress() {
 function renderSettings() {
   $("#child-name").value = state.childName || "";
   $("#opt-sound").checked = state.sound !== false;
+  const emailInput = $("#parent-email");
+  if (emailInput) {
+    emailInput.value =
+      state.parentEmail ||
+      (window.EmailReport && EmailReport.DEFAULT_EMAIL) ||
+      "quangtran@123corp.vn";
+  }
+  const optMail = $("#opt-email-notify");
+  if (optMail) optMail.checked = state.emailNotify !== false;
+  const optEvery = $("#opt-email-every");
+  if (optEvery) optEvery.checked = !!state.emailEverySession;
 }
 
 // ——— Events ———
@@ -558,6 +626,45 @@ function bindEvents() {
     } else {
       toast("Đã tắt âm thanh");
     }
+  });
+
+  function saveParentEmailSettings() {
+    const emailInput = $("#parent-email");
+    if (emailInput) {
+      const v = emailInput.value.trim();
+      state.parentEmail = v || "quangtran@123corp.vn";
+    }
+    const optMail = $("#opt-email-notify");
+    if (optMail) state.emailNotify = optMail.checked;
+    const optEvery = $("#opt-email-every");
+    if (optEvery) state.emailEverySession = optEvery.checked;
+    saveState(state);
+  }
+
+  $("#parent-email")?.addEventListener("change", () => {
+    saveParentEmailSettings();
+    toast("Đã lưu email bố/mẹ");
+  });
+  $("#opt-email-notify")?.addEventListener("change", () => {
+    saveParentEmailSettings();
+    toast(
+      state.emailNotify
+        ? "Sẽ gửi email khi bé hoàn thành streak"
+        : "Đã tắt gửi email"
+    );
+  });
+  $("#opt-email-every")?.addEventListener("change", () => {
+    saveParentEmailSettings();
+    toast(
+      state.emailEverySession
+        ? "Gửi email mọi buổi luyện"
+        : "Chỉ gửi khi hoàn thành streak / ngày mới"
+    );
+  });
+  $("#btn-save-email")?.addEventListener("click", () => {
+    saveParentEmailSettings();
+    toast("Đã lưu cài đặt email");
+    sfx("pop");
   });
 
   // Mở khóa audio trên iPad/Safari sau lần chạm đầu

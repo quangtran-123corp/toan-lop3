@@ -4,6 +4,10 @@ function defaultState() {
   return {
     childName: "",
     sound: true,
+    // Email báo cáo cho bố/mẹ
+    parentEmail: "quangtran@123corp.vn",
+    emailNotify: true, // gửi khi hoàn thành streak / ngày luyện mới
+    emailEverySession: false, // true = gửi mọi buổi luyện
     stars: 0,
     streak: 0,
     lastPracticeDate: null,
@@ -65,6 +69,10 @@ function ensureDayRollover(state) {
   return state;
 }
 
+/**
+ * Ghi nhận buổi luyện.
+ * Trả về { state, events } — events dùng để gửi email streak.
+ */
 function recordSession(state, info) {
   var topicId = info.topicId;
   var level = info.level;
@@ -73,6 +81,12 @@ function recordSession(state, info) {
   var starsEarned = info.starsEarned;
   var t = todayStr();
   ensureDayRollover(state);
+
+  var events = {
+    streakIncreased: false,
+    dailyCompleted: false,
+    firstSessionToday: false,
+  };
 
   state.stars += starsEarned;
   state.todayCorrect += correct;
@@ -89,6 +103,8 @@ function recordSession(state, info) {
       state.streak = 1;
     }
     state.lastPracticeDate = t;
+    events.streakIncreased = true;
+    events.firstSessionToday = true;
   }
 
   if (state.dailyCompletedDate !== t) {
@@ -99,6 +115,7 @@ function recordSession(state, info) {
     if (state.dailyCorrectToday >= state.dailyGoal) {
       state.dailyCompletedDate = t;
       state.stars += 5;
+      events.dailyCompleted = true;
     }
   }
 
@@ -130,7 +147,7 @@ function recordSession(state, info) {
   state.history = state.history.slice(0, 50);
 
   saveState(state);
-  return state;
+  return { state: state, events: events };
 }
 
 function resetProgress() {
