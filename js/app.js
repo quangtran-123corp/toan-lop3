@@ -431,18 +431,16 @@ function finishSession() {
           return;
         }
         if (res && res.ok) {
-          emailLine.textContent = "✅ Đã gửi kết quả về: " + emailsLabel;
+          emailLine.textContent = "✅ Đã gửi kết quả (Web3Forms) → " + emailsLabel;
           toast("Đã gửi email cho bố & mẹ 📧");
-        } else if (res && res.needsActivation) {
+        } else if (res && res.needsSetup) {
           emailLine.textContent =
-            "⚠️ Cần kích hoạt FormSubmit: mở email Activate Form tại " +
-            emailsLabel +
-            " (cả Spam), bấm link xác nhận, rồi làm lại 1 bài.";
-          toast("Cần bấm Activate Form trong email");
+            "⚠️ Chưa có Access Key Web3Forms. Vào ⚙️ Cài đặt để dán key free từ web3forms.com";
+          toast("Cần cấu hình Web3Forms");
         } else {
           emailLine.textContent =
             "⚠️ Chưa gửi được email. " +
-            (res && res.error ? res.error : "Thử nút Gửi email thử trong Cài đặt.");
+            (res && res.error ? res.error : "Kiểm tra Access Key trong Cài đặt.");
         }
       });
     }
@@ -493,29 +491,14 @@ function renderProgress() {
 function renderSettings() {
   $("#child-name").value = state.childName || "";
   $("#opt-sound").checked = state.sound !== false;
-  // Đồng bộ email bố+mẹ nếu state cũ chỉ có 1 email
-  if (
-    state.parentEmail &&
-    state.parentEmail.indexOf("ngocdang@123corp.vn") < 0 &&
-    state.parentEmail.indexOf("quangtran@123corp.vn") >= 0
-  ) {
-    state.parentEmail = "quangtran@123corp.vn, ngocdang@123corp.vn";
-    state.parentEmails = state.parentEmail;
-    saveState(state);
-  }
-  if (!state.parentEmail || !String(state.parentEmail).trim()) {
-    state.parentEmail = "quangtran@123corp.vn, ngocdang@123corp.vn";
-    state.parentEmails = state.parentEmail;
-  }
-  const emailInput = $("#parent-email");
-  if (emailInput) {
-    emailInput.value =
-      state.parentEmail ||
-      (window.EmailReport &&
-        EmailReport.DEFAULT_EMAILS &&
-        EmailReport.DEFAULT_EMAILS.join(", ")) ||
-      "quangtran@123corp.vn, ngocdang@123corp.vn";
-  }
+  state.parentEmail = "quangtran@123corp.vn, ngocdang@123corp.vn";
+  state.parentEmails = state.parentEmail;
+
+  const keyDad = $("#web3-key-dad");
+  const keyMom = $("#web3-key-mom");
+  if (keyDad) keyDad.value = state.web3formsKeyDad || "";
+  if (keyMom) keyMom.value = state.web3formsKeyMom || "";
+
   const optMail = $("#opt-email-notify");
   if (optMail) optMail.checked = state.emailNotify !== false;
   const optEvery = $("#opt-email-every");
@@ -526,14 +509,23 @@ function renderSettings() {
       const last = JSON.parse(localStorage.getItem("toan-lop3-last-email") || "null");
       if (last && last.at) {
         lastEl.textContent =
-          "Lần gửi gần nhất: " +
+          "Lần gửi gần nhất (" +
+          (last.provider || "web3forms") +
+          "): " +
           new Date(last.at).toLocaleString("vi-VN") +
           " — " +
           (last.results || [])
             .map(function (r) {
-              return r.to + (r.ok ? " ✓" : " ✗");
+              return (r.label || r.to) + (r.ok ? " ✓" : " ✗");
             })
             .join(", ");
+      } else if (
+        window.EmailReport &&
+        EmailReport.hasAnyAccessKey &&
+        !EmailReport.hasAnyAccessKey(state)
+      ) {
+        lastEl.textContent =
+          "Chưa có Access Key — vào web3forms.com lấy key free rồi dán phía trên.";
       } else {
         lastEl.textContent = "Chưa gửi email lần nào từ máy này.";
       }
@@ -687,13 +679,12 @@ function bindEvents() {
   });
 
   function saveParentEmailSettings() {
-    const emailInput = $("#parent-email");
-    if (emailInput) {
-      const v = emailInput.value.trim();
-      state.parentEmail =
-        v || "quangtran@123corp.vn, ngocdang@123corp.vn";
-      state.parentEmails = state.parentEmail;
-    }
+    state.parentEmail = "quangtran@123corp.vn, ngocdang@123corp.vn";
+    state.parentEmails = state.parentEmail;
+    const keyDad = $("#web3-key-dad");
+    const keyMom = $("#web3-key-mom");
+    if (keyDad) state.web3formsKeyDad = keyDad.value.trim();
+    if (keyMom) state.web3formsKeyMom = keyMom.value.trim();
     const optMail = $("#opt-email-notify");
     if (optMail) state.emailNotify = optMail.checked;
     const optEvery = $("#opt-email-every");
@@ -701,10 +692,6 @@ function bindEvents() {
     saveState(state);
   }
 
-  $("#parent-email")?.addEventListener("change", () => {
-    saveParentEmailSettings();
-    toast("Đã lưu email bố/mẹ");
-  });
   $("#opt-email-notify")?.addEventListener("change", () => {
     saveParentEmailSettings();
     toast(state.emailNotify ? "Đã bật gửi email" : "Đã tắt gửi email");
@@ -719,8 +706,15 @@ function bindEvents() {
   });
   $("#btn-save-email")?.addEventListener("click", () => {
     saveParentEmailSettings();
-    toast("Đã lưu cài đặt email");
+    const n =
+      (state.web3formsKeyDad ? 1 : 0) + (state.web3formsKeyMom ? 1 : 0);
+    toast(
+      n
+        ? "Đã lưu " + n + " Access Key Web3Forms"
+        : "Chưa dán key — vào web3forms.com lấy key free"
+    );
     sfx("pop");
+    renderSettings();
   });
   $("#btn-test-email")?.addEventListener("click", () => {
     saveParentEmailSettings();
@@ -730,13 +724,29 @@ function bindEvents() {
       btn.disabled = true;
       btn.textContent = "Đang gửi…";
     }
-    toast("Đang gửi email thử…");
+    toast("Đang gửi email thử (Web3Forms)…");
     if (!window.EmailReport || !EmailReport.sendTestEmail) {
       toast("Lỗi: chưa tải module email");
       if (btn) {
         btn.disabled = false;
         btn.textContent = "Gửi email thử ngay";
       }
+      return;
+    }
+    if (EmailReport.hasAnyAccessKey && !EmailReport.hasAnyAccessKey(state)) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Gửi email thử ngay";
+      }
+      alert(
+        "⚠️ CHƯA CÓ ACCESS KEY\n\n" +
+          "1. Mở https://web3forms.com (miễn phí)\n" +
+          "2. Tạo Access Key với email quangtran@123corp.vn (bố)\n" +
+          "3. Tạo Access Key với email ngocdang@123corp.vn (mẹ)\n" +
+          "4. Dán 2 key vào ⚙️ Cài đặt → Lưu\n" +
+          "5. Bấm Gửi email thử ngay\n\n" +
+          "Web3Forms ít bị Kaspersky chặn hơn FormSubmit."
+      );
       return;
     }
     EmailReport.sendTestEmail(state).then(function (res) {
@@ -748,25 +758,17 @@ function bindEvents() {
       if (res && res.ok) {
         toast("Đã gửi email thử — kiểm tra hộp thư bố & mẹ");
         alert(
-          "✅ Đã gửi email thử tới:\n" +
-            EmailReport.getParentEmailDisplay(state) +
-            "\n\nHãy kiểm tra Hộp thư đến và Spam."
+          "✅ Đã gửi thử qua Web3Forms!\n\n" +
+            (res.details || "") +
+            "\n\nKiểm tra hộp thư:\n- quangtran@123corp.vn\n- ngocdang@123corp.vn\n(cả Spam nếu cần)."
         );
-      } else if (res && res.needsActivation) {
-        alert(
-          "⚠️ FormSubmit CHƯA KÍCH HOẠT\n\n" +
-            "1. Mở email quangtran@123corp.vn và ngocdang@123corp.vn\n" +
-            "2. Tìm mail từ FormSubmit: \"Activate Form\" (cả thư mục Spam)\n" +
-            "3. Bấm link Activate trong mail\n" +
-            "4. Quay lại app bấm \"Gửi email thử ngay\" một lần nữa\n\n" +
-            (res.error || "")
-        );
+      } else if (res && res.needsSetup) {
+        alert("⚠️ " + (res.error || "Cần cấu hình Access Key Web3Forms."));
       } else {
         alert(
           "⚠️ Gửi email thất bại\n\n" +
             (res && res.error ? res.error : "Thử lại sau.") +
-            "\n\nChi tiết: " +
-            (res && res.details ? res.details : "")
+            "\n\nGợi ý: kiểm tra Access Key đúng email, mạng ổn, Kaspersky không chặn api.web3forms.com"
         );
       }
     });

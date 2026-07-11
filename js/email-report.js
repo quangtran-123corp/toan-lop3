@@ -1,10 +1,16 @@
 /**
- * Gửi báo cáo kết quả luyện Toán về email bố + mẹ.
- * Nội dung: Tên bé, thử thách hôm nay, điểm số, điểm mạnh/yếu, lời khuyên.
- * FormSubmit — mỗi email cần Activate Form 1 lần (kể cả Spam).
+ * Gửi báo cáo kết quả qua Web3Forms (miễn phí, ít bị antivirus chặn hơn FormSubmit).
+ *
+ * Đăng ký free: https://web3forms.com
+ * - Tạo Access Key cho quangtran@123corp.vn
+ * - Tạo Access Key cho ngocdang@123corp.vn
+ * - Dán key vào ⚙️ Cài đặt trong app
+ *
+ * API: POST https://api.web3forms.com/submit
  */
 (function (global) {
   var DEFAULT_EMAILS = ["quangtran@123corp.vn", "ngocdang@123corp.vn"];
+  var WEB3FORMS_URL = "https://api.web3forms.com/submit";
   var pending = false;
 
   var ADVICE = {
@@ -45,7 +51,6 @@
     return out;
   }
 
-  /** Luôn gồm bố + mẹ; gộp thêm email tùy chỉnh trong state */
   function getParentEmails(state) {
     var raw = "";
     if (state) {
@@ -59,7 +64,6 @@
       })
       .filter(Boolean);
     var list = uniqueEmails(parts.concat(DEFAULT_EMAILS));
-    // đảm bảo đủ 2 email mặc định
     DEFAULT_EMAILS.forEach(function (e) {
       if (list.indexOf(e) < 0) list.push(e);
     });
@@ -68,6 +72,54 @@
 
   function getParentEmailDisplay(state) {
     return getParentEmails(state).join(", ");
+  }
+
+  /**
+   * Danh sách { email, access_key } để gửi Web3Forms.
+   * Free plan: mỗi access_key gắn 1 email nhận.
+   */
+  function getWeb3Targets(state) {
+    var targets = [];
+    var dadKey = (state && state.web3formsKeyDad) || "";
+    var momKey = (state && state.web3formsKeyMom) || "";
+    var sharedKey = (state && state.web3formsAccessKey) || "";
+
+    dadKey = String(dadKey).trim();
+    momKey = String(momKey).trim();
+    sharedKey = String(sharedKey).trim();
+
+    if (dadKey) {
+      targets.push({ email: "quangtran@123corp.vn", access_key: dadKey, label: "Bố" });
+    }
+    if (momKey) {
+      targets.push({ email: "ngocdang@123corp.vn", access_key: momKey, label: "Mẹ" });
+    }
+    // Key dùng chung (1 email đã cấu hình trên Web3Forms dashboard)
+    if (sharedKey && !dadKey && !momKey) {
+      targets.push({
+        email: getParentEmails(state)[0] || DEFAULT_EMAILS[0],
+        access_key: sharedKey,
+        label: "Chung",
+      });
+    }
+    // Nếu chỉ có 1 trong 2 key riêng + shared, thêm shared nếu khác
+    if (sharedKey && (dadKey || momKey)) {
+      var used = targets.map(function (t) {
+        return t.access_key;
+      });
+      if (used.indexOf(sharedKey) < 0) {
+        targets.push({
+          email: "forward",
+          access_key: sharedKey,
+          label: "Key thêm",
+        });
+      }
+    }
+    return targets;
+  }
+
+  function hasAnyAccessKey(state) {
+    return getWeb3Targets(state).length > 0;
   }
 
   function shouldNotify(state, events, force) {
@@ -86,10 +138,6 @@
     return id;
   }
 
-  /**
-   * Phân tích answerLog buổi này + byTopic tổng hợp
-   * answerLog: [{ topicId, ok, text }]
-   */
   function analyzePerformance(state, sessionInfo) {
     var log = (sessionInfo && sessionInfo.answerLog) || [];
     var by = {};
@@ -105,7 +153,6 @@
       }
     }
 
-    // Nếu không có log (bản cũ): gán theo topic buổi
     if (!Object.keys(by).length && sessionInfo) {
       var tid = sessionInfo.topicId || "hon-hop";
       by[tid] = {
@@ -132,14 +179,12 @@
       return b.pct - a.pct;
     });
 
-    // Điểm mạnh: >= 70% và có ít nhất 1 câu; yếu: < 60%
     var strengths = sessionStats.filter(function (s) {
       return s.total > 0 && s.pct >= 70;
     });
     var weaknesses = sessionStats.filter(function (s) {
       return s.total > 0 && s.pct < 60;
     });
-    // Nếu không có yếu rõ, lấy dạng thấp nhất
     if (!weaknesses.length && sessionStats.length) {
       var worst = sessionStats[sessionStats.length - 1];
       if (worst.pct < 100) weaknesses = [worst];
@@ -149,7 +194,6 @@
       if (best.pct >= 50) strengths = [best];
     }
 
-    // Bổ sung điểm yếu dài hạn từ state.byTopic
     var longWeak = [];
     var longStrong = [];
     if (state && state.byTopic) {
@@ -219,9 +263,7 @@
 
     if (state && state.streak >= 3) {
       adviceList.push(
-        "Streak " +
-          state.streak +
-          " ngày — duy trì thói quen mỗi ngày 10–15 phút rất tốt!"
+        "Streak " + state.streak + " ngày — duy trì thói quen mỗi ngày 10–15 phút rất tốt!"
       );
     } else {
       adviceList.push("Khuyến khích bé luyện đều mỗi ngày để giữ chuỗi streak.");
@@ -269,11 +311,7 @@
           " câu đúng"
       );
     }
-    return {
-      title: name,
-      level: level,
-      summary: parts.join(" · "),
-    };
+    return { title: name, level: level, summary: parts.join(" · ") };
   }
 
   function buildMessage(payload) {
@@ -322,25 +360,14 @@
     );
     lines.push("   Sao buổi này: +" + payload.starsEarned);
     lines.push(
-      "   Streak: " +
-        payload.streak +
-        " ngày  |  Tổng sao: " +
-        payload.totalStars
+      "   Streak: " + payload.streak + " ngày  |  Tổng sao: " + payload.totalStars
     );
     lines.push("");
     lines.push("4) CHI TIẾT THEO DẠNG BÀI (buổi này)");
     if (a.sessionStats && a.sessionStats.length) {
       a.sessionStats.forEach(function (s) {
         lines.push(
-          "   • " +
-            s.name +
-            ": " +
-            s.correct +
-            "/" +
-            s.total +
-            " (" +
-            s.pct +
-            "%)"
+          "   • " + s.name + ": " + s.correct + "/" + s.total + " (" + s.pct + "%)"
         );
       });
     } else {
@@ -396,17 +423,23 @@
       lines.push("");
     }
     if (payload.isTest) {
-      lines.push(">>> Đây là EMAIL THỬ từ app.");
+      lines.push(">>> Đây là EMAIL THỬ từ app (Web3Forms).");
       lines.push("");
     }
     lines.push("App: https://quangtran-123corp.github.io/toan-lop3/");
-    lines.push("(Email tự động — Toán Lớp 3 KNTT)");
+    lines.push("(Gửi qua Web3Forms — Toán Lớp 3 KNTT)");
     return lines.join("\n");
   }
 
-  function postToFormSubmit(toEmail, body) {
-    var url = "https://formsubmit.co/ajax/" + encodeURIComponent(toEmail);
-    return fetch(url, {
+  function postWeb3Forms(accessKey, fields) {
+    var body = {};
+    for (var k in fields) {
+      if (Object.prototype.hasOwnProperty.call(fields, k)) body[k] = fields[k];
+    }
+    body.access_key = accessKey;
+    body.botcheck = false;
+
+    return fetch(WEB3FORMS_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -426,23 +459,22 @@
     });
   }
 
-  function interpretResult(r, toEmail) {
+  function interpretResult(r, target) {
     var data = r.data || {};
     var msg = String(data.message || data.raw || r.text || "");
-    var successFlag = data.success;
     var ok =
-      successFlag === true ||
-      successFlag === "true" ||
-      /thank you|submitted|success/i.test(msg);
-    if (successFlag === false || successFlag === "false") ok = false;
-    var needsActivation =
-      /activat/i.test(msg) || /activate form/i.test(msg) || /we've sent you an email/i.test(msg);
+      data.success === true ||
+      data.success === "true" ||
+      (r.httpOk && /success|sent|thank/i.test(msg));
+    if (data.success === false || data.success === "false") ok = false;
+
     return {
-      to: toEmail,
-      ok: ok && r.httpOk,
-      needsActivation: needsActivation,
-      message: msg,
+      to: target.email,
+      label: target.label,
+      ok: ok,
+      message: msg || (ok ? "OK" : "Lỗi gửi"),
       status: r.status,
+      needsKey: /access.?key|invalid|unauthorized/i.test(msg),
     };
   }
 
@@ -457,13 +489,14 @@
       return Promise.resolve({ ok: true, skipped: true });
     }
 
-    var emails = getParentEmails(state);
-    // luôn có ngocdang
-    if (emails.indexOf("ngocdang@123corp.vn") < 0) {
-      emails.push("ngocdang@123corp.vn");
-    }
-    if (emails.indexOf("quangtran@123corp.vn") < 0) {
-      emails.push("quangtran@123corp.vn");
+    var targets = getWeb3Targets(state);
+    if (!targets.length) {
+      return Promise.resolve({
+        ok: false,
+        needsSetup: true,
+        error:
+          "Chưa cấu hình Web3Forms Access Key. Vào ⚙️ Cài đặt → lấy key miễn phí tại web3forms.com (1 key cho bố, 1 key cho mẹ) rồi dán vào app.",
+      });
     }
 
     var topic =
@@ -528,6 +561,7 @@
     if (!weakText) weakText = "Không có dạng yếu rõ";
 
     var adviceText = (analysis.adviceList || []).slice(0, 5).join(" | ");
+    var message = buildMessage(payload);
 
     var subject =
       (payload.isTest ? "[TEST] " : "") +
@@ -541,46 +575,42 @@
       grade +
       ")";
 
-    var message = buildMessage(payload);
     pending = true;
 
-    var tasks = emails.map(function (to) {
-      var body = {
-        // FormSubmit table fields (tiếng Việt rõ ràng)
-        _subject: subject,
-        _template: "table",
-        _captcha: "false",
-        _honey: "",
-        name: payload.childName,
-        email: to,
-        _replyto: "quangtran@123corp.vn",
-        "1_Ten_Be": payload.childName,
-        "2_Thu_thach_hom_nay": challenge.summary,
-        "3_Diem_so":
-          payload.correct +
-          "/" +
-          payload.total +
-          " câu đúng (" +
-          payload.pct +
-          "%) — " +
-          grade,
-        "4_Diem_manh": strengthText,
-        "5_Diem_yeu": weakText,
-        "6_Loi_khuyen": adviceText,
-        "7_Streak": payload.streak + " ngày liên tiếp",
-        "8_Tong_sao": String(payload.totalStars),
-        message: message,
-      };
+    var fieldsBase = {
+      subject: subject,
+      from_name: "Toán Lớp 3 App",
+      name: payload.childName,
+      email: "quangtran@123corp.vn",
+      // Các field hiển thị rõ trên email Web3Forms
+      "Tên bé": payload.childName,
+      "Thử thách hôm nay": challenge.summary,
+      "Điểm số":
+        payload.correct +
+        "/" +
+        payload.total +
+        " câu đúng (" +
+        payload.pct +
+        "%) — " +
+        grade,
+      "Điểm mạnh": strengthText,
+      "Điểm yếu": weakText,
+      "Lời khuyên": adviceText,
+      Streak: payload.streak + " ngày liên tiếp",
+      "Tổng sao": String(payload.totalStars),
+      message: message,
+    };
 
-      return postToFormSubmit(to, body)
+    var tasks = targets.map(function (target) {
+      return postWeb3Forms(target.access_key, fieldsBase)
         .then(function (r) {
-          return interpretResult(r, to);
+          return interpretResult(r, target);
         })
         .catch(function (err) {
           return {
-            to: to,
+            to: target.email,
+            label: target.label,
             ok: false,
-            needsActivation: false,
             message: err && err.message ? err.message : String(err),
           };
         });
@@ -591,40 +621,35 @@
       var anyOk = results.some(function (r) {
         return r.ok;
       });
-      var anyActivation = results.some(function (r) {
-        return r.needsActivation;
-      });
       var details = results
         .map(function (r) {
-          return r.to + ": " + (r.ok ? "OK" : r.message || "loi");
+          return (r.label || r.to) + ": " + (r.ok ? "OK" : r.message || "lỗi");
         })
         .join(" | ");
 
       try {
         localStorage.setItem(
           "toan-lop3-last-email",
-          JSON.stringify({ at: Date.now(), results: results, subject: subject })
+          JSON.stringify({
+            at: Date.now(),
+            provider: "web3forms",
+            results: results,
+            subject: subject,
+          })
         );
       } catch (e) {
         /* ignore */
       }
 
-      if (anyOk) return { ok: true, results: results, details: details };
-      if (anyActivation) {
-        return {
-          ok: false,
-          needsActivation: true,
-          results: results,
-          details: details,
-          error:
-            "FormSubmit chưa kích hoạt. Mở email Activate Form (Spam) của bố và mẹ → bấm link → thử lại.",
-        };
+      if (anyOk) {
+        return { ok: true, results: results, details: details, provider: "web3forms" };
       }
       return {
         ok: false,
         results: results,
         details: details,
-        error: details || "Không gửi được email",
+        error: details || "Không gửi được qua Web3Forms",
+        provider: "web3forms",
       };
     });
   }
@@ -660,6 +685,8 @@
   }
 
   global.EmailReport = {
+    PROVIDER: "web3forms",
+    SETUP_URL: "https://web3forms.com",
     DEFAULT_EMAIL: DEFAULT_EMAILS[0],
     DEFAULT_EMAILS: DEFAULT_EMAILS,
     getParentEmail: function (state) {
@@ -667,6 +694,8 @@
     },
     getParentEmails: getParentEmails,
     getParentEmailDisplay: getParentEmailDisplay,
+    getWeb3Targets: getWeb3Targets,
+    hasAnyAccessKey: hasAnyAccessKey,
     shouldNotify: shouldNotify,
     sendStreakReport: sendStreakReport,
     sendTestEmail: sendTestEmail,

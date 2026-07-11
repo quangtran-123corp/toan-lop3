@@ -4,11 +4,15 @@ function defaultState() {
   return {
     childName: "",
     sound: true,
-    // Email báo cáo cho bố + mẹ (phân tách bằng dấu phẩy)
+    // Email báo cáo cho bố + mẹ (Web3Forms)
     parentEmail: "quangtran@123corp.vn, ngocdang@123corp.vn",
     parentEmails: "quangtran@123corp.vn, ngocdang@123corp.vn",
     emailNotify: true,
-    emailEverySession: true, // gửi sau MỌI buổi hoàn thành
+    emailEverySession: true,
+    // Access Key free từ https://web3forms.com (mỗi email nhận = 1 key)
+    web3formsKeyDad: "",
+    web3formsKeyMom: "",
+    web3formsAccessKey: "",
     stars: 0,
     streak: 0,
     lastPracticeDate: null,
