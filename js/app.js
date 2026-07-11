@@ -135,6 +135,8 @@ function startPractice(topicId, level, count) {
     correct: 0,
     stars: 0,
     answered: false,
+    answerLog: [],
+    isDaily: false,
   };
   const topic = getTopic(topicId);
   $("#practice-label").textContent =
@@ -246,6 +248,14 @@ function checkAnswer(userRaw) {
 
   const item = session.questions[session.index];
   const ok = normalizeAnswer(userRaw) === normalizeAnswer(item.answer);
+
+  if (!session.answerLog) session.answerLog = [];
+  session.answerLog.push({
+    topicId: item.topicId || session.topicId,
+    ok: ok,
+    text: item.text || "",
+    level: item.level || session.level,
+  });
 
   if (ok) {
     session.correct += 1;
@@ -410,6 +420,8 @@ function finishSession() {
           correct,
           total,
           starsEarned,
+          answerLog: session.answerLog || [],
+          isDaily: !!session.isDaily,
         },
         events
       ).then(function (res) {
@@ -597,6 +609,7 @@ function bindEvents() {
       stars: 0,
       answered: false,
       isDaily: true,
+      answerLog: [],
     };
     $("#practice-label").textContent = "🎯 Thử thách hôm nay";
     $("#score-pill").textContent = "⭐ 0";

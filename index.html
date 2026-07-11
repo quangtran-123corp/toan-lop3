@@ -1264,6 +1264,7 @@ body {
           <input type="text" id="parent-email" maxlength="120" placeholder="quangtran@123corp.vn, ngocdang@123corp.vn" value="quangtran@123corp.vn, ngocdang@123corp.vn" autocomplete="email" />
           <button type="button" class="btn btn-primary" id="btn-save-email">Lưu</button>
         </div>
+        <p class="hint" style="margin-top:8px">Mặc định gửi cho: <strong>quangtran@123corp.vn</strong> (bố) và <strong>ngocdang@123corp.vn</strong> (mẹ).</p>
         <label class="check-row" style="margin-top:12px">
           <input type="checkbox" id="opt-email-notify" checked />
           <span>Bật gửi email kết quả</span>
@@ -1274,7 +1275,7 @@ body {
         </label>
         <button type="button" class="btn btn-secondary btn-block" id="btn-test-email" style="margin-top:12px">Gửi email thử ngay</button>
         <p class="hint" id="email-last-status" style="margin-top:10px"></p>
-        <p class="hint"><strong>Lần đầu bắt buộc:</strong> mở mail <em>Activate Form</em> từ FormSubmit tại <strong>quangtran@123corp.vn</strong> và <strong>ngocdang@123corp.vn</strong> (kể cả Spam) → bấm link → rồi bấm nút thử lại.</p>
+        <p class="hint"><strong>Email gồm:</strong> Tên bé · Thử thách hôm nay · Điểm số · Điểm mạnh · Điểm yếu · Lời khuyên.<br/><strong>Lần đầu:</strong> mở mail <em>Activate Form</em> (cả Spam) ở cả 2 hộp thư → bấm link → thử lại.</p>
       </div>
       <div class="about-card">
         <h3>Về app</h3>
@@ -4425,14 +4426,35 @@ window.questionKey = questionKey;
 /* ===== EMAIL REPORT ===== */
 /**
  * Gửi báo cáo kết quả luyện Toán về email bố + mẹ.
- * Dùng FormSubmit (miễn phí).
- *
- * Lần đầu mỗi địa chỉ email cần MỞ MAIL "Activate Form" và bấm xác nhận.
- * (Kiểm tra cả hộp Spam / Quảng cáo / Junk)
+ * Nội dung: Tên bé, thử thách hôm nay, điểm số, điểm mạnh/yếu, lời khuyên.
+ * FormSubmit — mỗi email cần Activate Form 1 lần (kể cả Spam).
  */
 (function (global) {
   var DEFAULT_EMAILS = ["quangtran@123corp.vn", "ngocdang@123corp.vn"];
   var pending = false;
+
+  var ADVICE = {
+    "on-tap-so":
+      "Luyện đọc-viết số, so sánh và làm tròn 5–10 phút/ngày với số có 3–4 chữ số.",
+    "cong-tru":
+      "Ôn cộng trừ có nhớ / mượn trong phạm vi 1000; làm 10 phép tính nháp mỗi ngày.",
+    "bang-nhan-chia":
+      "Học thuộc bảng nhân-chia 2–9 theo từng bảng; kiểm tra chéo (vd 6×7 và 42:6).",
+    "nhan-chia-lon":
+      "Rèn nhân/chia số có 2–3 chữ số với số 1 chữ số; chú ý đặt tính thẳng cột.",
+    "hinh-hoc":
+      "Cùng bé nhận biết góc vuông, trung điểm, bán kính trên hình vẽ thực tế.",
+    "chu-vi-dien-tich":
+      "Nhớ công thức: C=(dài+rộng)×2; S=dài×rộng. Vẽ hình và ghi số đo lên hình.",
+    "do-luong":
+      "Ôn đổi đơn vị: 1m=100cm, 1kg=1000g, 1 giờ=60 phút; làm vài bài tiền Việt.",
+    "phan-so":
+      "Dùng hình tròn/thanh chia phần để hiểu 1/2, 1/3, 1/4; so sánh phân số đơn giản.",
+    "toan-loi":
+      "Đọc kỹ đề, gạch chân dữ kiện, xác định phép tính trước khi ra đáp án.",
+    "hon-hop":
+      "Làm thử thách hỗn hợp 10 câu mỗi ngày để ôn đều các dạng.",
+  };
 
   function uniqueEmails(list) {
     var seen = {};
@@ -4449,7 +4471,7 @@ window.questionKey = questionKey;
     return out;
   }
 
-  /** Danh sách email bố/mẹ từ state (chuỗi phân tách bằng dấu phẩy) */
+  /** Luôn gồm bố + mẹ; gộp thêm email tùy chỉnh trong state */
   function getParentEmails(state) {
     var raw = "";
     if (state) {
@@ -4462,9 +4484,12 @@ window.questionKey = questionKey;
         return s.trim();
       })
       .filter(Boolean);
-    if (!parts.length) return DEFAULT_EMAILS.slice();
-    var list = uniqueEmails(parts);
-    return list.length ? list : DEFAULT_EMAILS.slice();
+    var list = uniqueEmails(parts.concat(DEFAULT_EMAILS));
+    // đảm bảo đủ 2 email mặc định
+    DEFAULT_EMAILS.forEach(function (e) {
+      if (list.indexOf(e) < 0) list.push(e);
+    });
+    return list;
   }
 
   function getParentEmailDisplay(state) {
@@ -4474,52 +4499,334 @@ window.questionKey = questionKey;
   function shouldNotify(state, events, force) {
     if (force) return true;
     if (!state || state.emailNotify === false) return false;
-    // Mặc định: gửi sau MỌI buổi hoàn thành (emailEverySession mặc định true)
     if (state.emailEverySession !== false) return true;
     if (events && (events.dailyCompleted || events.streakIncreased)) return true;
     return false;
   }
 
-  function buildMessage(payload) {
-    var lines = [
-      "Báo cáo luyện Toán Lớp 3 — Kết nối tri thức",
-      "========================================",
-      "",
-      "Bé: " + (payload.childName || "Bé"),
-      "Thời gian: " + (payload.when || new Date().toLocaleString("vi-VN")),
-      "",
-      "--- Kết quả buổi luyện ---",
-      "Chủ đề: " + (payload.topicName || payload.topicId || "—"),
-      "Mức: " + (payload.level === "advanced" ? "Nâng cao" : "Cơ bản"),
-      "Đúng: " + payload.correct + " / " + payload.total + " câu",
-      "Chính xác: " + payload.pct + "%",
-      "Sao buổi này: +" + payload.starsEarned,
-      "",
-      "--- Streak & tổng ---",
-      "Streak: " + payload.streak + " ngày liên tiếp",
-      "Tong sao: " + payload.totalStars,
-      "So buoi hom nay: " + payload.todaySessions,
-      "Thu thach ngay: " +
-        (payload.dailyDone
-          ? "DA HOAN THANH"
-          : (payload.dailyProgress || "0") + " / " + (payload.dailyGoal || 10) + " cau dung"),
-      "",
-    ];
-    if (payload.dailyCompletedNow) {
-      lines.push(">>> Be vua HOAN THANH thu thach / streak ngay hom nay!");
-      lines.push("");
+  function topicLabel(id) {
+    if (typeof getTopic === "function") {
+      var t = getTopic(id);
+      return (t.emoji ? t.emoji + " " : "") + (t.name || id);
     }
-    if (payload.streakIncreased) {
-      lines.push(">>> Streak vua duoc cap nhat (ngay luyen moi).");
+    return id;
+  }
+
+  /**
+   * Phân tích answerLog buổi này + byTopic tổng hợp
+   * answerLog: [{ topicId, ok, text }]
+   */
+  function analyzePerformance(state, sessionInfo) {
+    var log = (sessionInfo && sessionInfo.answerLog) || [];
+    var by = {};
+
+    for (var i = 0; i < log.length; i++) {
+      var row = log[i];
+      var id = row.topicId || sessionInfo.topicId || "hon-hop";
+      if (!by[id]) by[id] = { correct: 0, total: 0, wrongSamples: [] };
+      by[id].total += 1;
+      if (row.ok) by[id].correct += 1;
+      else if (row.text && by[id].wrongSamples.length < 2) {
+        by[id].wrongSamples.push(String(row.text).slice(0, 70));
+      }
+    }
+
+    // Nếu không có log (bản cũ): gán theo topic buổi
+    if (!Object.keys(by).length && sessionInfo) {
+      var tid = sessionInfo.topicId || "hon-hop";
+      by[tid] = {
+        correct: sessionInfo.correct || 0,
+        total: sessionInfo.total || 0,
+        wrongSamples: [],
+      };
+    }
+
+    var sessionStats = [];
+    Object.keys(by).forEach(function (id) {
+      var s = by[id];
+      var pct = s.total ? Math.round((s.correct / s.total) * 100) : 0;
+      sessionStats.push({
+        id: id,
+        name: topicLabel(id),
+        correct: s.correct,
+        total: s.total,
+        pct: pct,
+        wrongSamples: s.wrongSamples || [],
+      });
+    });
+    sessionStats.sort(function (a, b) {
+      return b.pct - a.pct;
+    });
+
+    // Điểm mạnh: >= 70% và có ít nhất 1 câu; yếu: < 60%
+    var strengths = sessionStats.filter(function (s) {
+      return s.total > 0 && s.pct >= 70;
+    });
+    var weaknesses = sessionStats.filter(function (s) {
+      return s.total > 0 && s.pct < 60;
+    });
+    // Nếu không có yếu rõ, lấy dạng thấp nhất
+    if (!weaknesses.length && sessionStats.length) {
+      var worst = sessionStats[sessionStats.length - 1];
+      if (worst.pct < 100) weaknesses = [worst];
+    }
+    if (!strengths.length && sessionStats.length) {
+      var best = sessionStats[0];
+      if (best.pct >= 50) strengths = [best];
+    }
+
+    // Bổ sung điểm yếu dài hạn từ state.byTopic
+    var longWeak = [];
+    var longStrong = [];
+    if (state && state.byTopic) {
+      Object.keys(state.byTopic).forEach(function (id) {
+        var p = state.byTopic[id];
+        if (!p || !p.total || p.total < 3) return;
+        var pct = Math.round((p.correct / p.total) * 100);
+        var item = {
+          id: id,
+          name: topicLabel(id),
+          correct: p.correct,
+          total: p.total,
+          pct: pct,
+        };
+        if (pct >= 75) longStrong.push(item);
+        else if (pct < 55) longWeak.push(item);
+      });
+      longStrong.sort(function (a, b) {
+        return b.pct - a.pct;
+      });
+      longWeak.sort(function (a, b) {
+        return a.pct - b.pct;
+      });
+    }
+
+    var adviceList = [];
+    var overallPct = sessionInfo.total
+      ? Math.round((sessionInfo.correct / sessionInfo.total) * 100)
+      : 0;
+
+    if (overallPct >= 90) {
+      adviceList.push(
+        "Bé làm rất tốt buổi này. Có thể tăng mức Nâng cao hoặc thêm 5 câu thử thách."
+      );
+    } else if (overallPct >= 70) {
+      adviceList.push(
+        "Kết quả khá. Nên ôn lại các câu sai ngay trong ngày (xem phần điểm yếu)."
+      );
+    } else if (overallPct >= 50) {
+      adviceList.push(
+        "Bé đang nắm được một phần. Nên luyện mức Cơ bản 10 phút/ngày ở dạng yếu nhất."
+      );
+    } else {
+      adviceList.push(
+        "Đừng lo — sai để học. Chọn 1 dạng yếu, làm 5 câu Cơ bản mỗi ngày trong 1 tuần."
+      );
+    }
+
+    weaknesses.slice(0, 3).forEach(function (w) {
+      var tip = ADVICE[w.id] || "Luyện thêm dạng này 5–10 phút/ngày.";
+      adviceList.push("[" + w.name + "] " + tip);
+    });
+    longWeak.slice(0, 2).forEach(function (w) {
+      var already = weaknesses.some(function (x) {
+        return x.id === w.id;
+      });
+      if (already) return;
+      adviceList.push(
+        "[Lịch sử] " +
+          w.name +
+          " còn " +
+          w.pct +
+          "% đúng — " +
+          (ADVICE[w.id] || "nên ôn lại.")
+      );
+    });
+
+    if (state && state.streak >= 3) {
+      adviceList.push(
+        "Streak " +
+          state.streak +
+          " ngày — duy trì thói quen mỗi ngày 10–15 phút rất tốt!"
+      );
+    } else {
+      adviceList.push("Khuyến khích bé luyện đều mỗi ngày để giữ chuỗi streak.");
+    }
+
+    return {
+      sessionStats: sessionStats,
+      strengths: strengths,
+      weaknesses: weaknesses,
+      longStrong: longStrong.slice(0, 3),
+      longWeak: longWeak.slice(0, 3),
+      adviceList: adviceList,
+    };
+  }
+
+  function describeChallenge(sessionInfo, events, state) {
+    var topic =
+      typeof getTopic === "function"
+        ? getTopic(sessionInfo.topicId || "hon-hop")
+        : { name: sessionInfo.topicId || "Hỗn hợp", emoji: "🎲" };
+    var level =
+      sessionInfo.level === "advanced"
+        ? "Nâng cao"
+        : sessionInfo.isDaily
+          ? "Thử thách hôm nay (Cơ bản + Nâng cao)"
+          : "Cơ bản";
+    var name =
+      sessionInfo.isDaily || sessionInfo.topicId === "hon-hop"
+        ? "Thử thách hôm nay — Hỗn hợp nhiều dạng"
+        : (topic.emoji ? topic.emoji + " " : "") + topic.name;
+    var parts = [
+      name,
+      "Mức: " + level,
+      "Số câu: " + (sessionInfo.total || 0),
+    ];
+    if (events && events.dailyCompleted) {
+      parts.push("Vừa hoàn thành mục tiêu thử thách ngày");
+    }
+    if (state && state.dailyCorrectToday != null) {
+      parts.push(
+        "Tiến độ thử thách ngày: " +
+          (state.dailyCorrectToday || 0) +
+          "/" +
+          (state.dailyGoal || 10) +
+          " câu đúng"
+      );
+    }
+    return {
+      title: name,
+      level: level,
+      summary: parts.join(" · "),
+    };
+  }
+
+  function buildMessage(payload) {
+    var a = payload.analysis || {
+      strengths: [],
+      weaknesses: [],
+      sessionStats: [],
+      adviceList: [],
+      longStrong: [],
+      longWeak: [],
+    };
+    var ch = payload.challenge || {};
+    var lines = [];
+
+    lines.push("══════════════════════════════════════");
+    lines.push("  BÁO CÁO KẾT QUẢ LUYỆN TOÁN LỚP 3");
+    lines.push("  Kết nối tri thức với cuộc sống");
+    lines.push("══════════════════════════════════════");
+    lines.push("");
+    lines.push("1) TÊN BÉ");
+    lines.push("   " + (payload.childName || "Bé"));
+    lines.push("");
+    lines.push("2) THỬ THÁCH / BÀI HÔM NAY");
+    lines.push("   " + (ch.summary || payload.topicName || "—"));
+    lines.push("   Thời gian: " + (payload.when || ""));
+    lines.push("");
+    lines.push("3) ĐIỂM SỐ");
+    lines.push(
+      "   " +
+        payload.correct +
+        "/" +
+        payload.total +
+        " câu đúng  |  Chính xác: " +
+        payload.pct +
+        "%"
+    );
+    lines.push(
+      "   Xếp loại: " +
+        (payload.pct >= 90
+          ? "Xuất sắc"
+          : payload.pct >= 70
+            ? "Khá / Tốt"
+            : payload.pct >= 50
+              ? "Trung bình"
+              : "Cần ôn thêm")
+    );
+    lines.push("   Sao buổi này: +" + payload.starsEarned);
+    lines.push(
+      "   Streak: " +
+        payload.streak +
+        " ngày  |  Tổng sao: " +
+        payload.totalStars
+    );
+    lines.push("");
+    lines.push("4) CHI TIẾT THEO DẠNG BÀI (buổi này)");
+    if (a.sessionStats && a.sessionStats.length) {
+      a.sessionStats.forEach(function (s) {
+        lines.push(
+          "   • " +
+            s.name +
+            ": " +
+            s.correct +
+            "/" +
+            s.total +
+            " (" +
+            s.pct +
+            "%)"
+        );
+      });
+    } else {
+      lines.push("   (Không có chi tiết từng dạng)");
+    }
+    lines.push("");
+    lines.push("5) ĐIỂM MẠNH");
+    if (a.strengths && a.strengths.length) {
+      a.strengths.forEach(function (s) {
+        lines.push("   ✓ " + s.name + " — " + s.pct + "% đúng buổi này");
+      });
+    } else {
+      lines.push("   • Chưa nổi bật rõ; cần luyện đều thêm.");
+    }
+    if (a.longStrong && a.longStrong.length) {
+      lines.push("   (Lịch sử tích lũy tốt:)");
+      a.longStrong.forEach(function (s) {
+        lines.push(
+          "   ✓ " + s.name + " — " + s.pct + "% (" + s.correct + "/" + s.total + ")"
+        );
+      });
+    }
+    lines.push("");
+    lines.push("6) ĐIỂM YẾU");
+    if (a.weaknesses && a.weaknesses.length) {
+      a.weaknesses.forEach(function (s) {
+        lines.push("   ! " + s.name + " — " + s.pct + "% đúng buổi này");
+        if (s.wrongSamples && s.wrongSamples.length) {
+          s.wrongSamples.forEach(function (w) {
+            lines.push("      VD câu sai: " + w);
+          });
+        }
+      });
+    } else {
+      lines.push("   • Không có dạng yếu rõ trong buổi này.");
+    }
+    if (a.longWeak && a.longWeak.length) {
+      lines.push("   (Cần theo dõi lâu dài:)");
+      a.longWeak.forEach(function (s) {
+        lines.push(
+          "   ! " + s.name + " — " + s.pct + "% (" + s.correct + "/" + s.total + ")"
+        );
+      });
+    }
+    lines.push("");
+    lines.push("7) LỜI KHUYÊN CHO BỐ MẸ");
+    (a.adviceList || []).forEach(function (tip, idx) {
+      lines.push("   " + (idx + 1) + ". " + tip);
+    });
+    lines.push("");
+    if (payload.dailyCompletedNow) {
+      lines.push(">>> Bé vừa HOÀN THÀNH thử thách / mục tiêu ngày!");
       lines.push("");
     }
     if (payload.isTest) {
-      lines.push(">>> DAY LA EMAIL THU (Test) tu app.");
+      lines.push(">>> Đây là EMAIL THỬ từ app.");
       lines.push("");
     }
     lines.push("App: https://quangtran-123corp.github.io/toan-lop3/");
-    lines.push("");
-    lines.push("(Email tu dong tu app Toan Lop 3)");
+    lines.push("(Email tự động — Toán Lớp 3 KNTT)");
     return lines.join("\n");
   }
 
@@ -4549,36 +4856,22 @@ window.questionKey = questionKey;
     var data = r.data || {};
     var msg = String(data.message || data.raw || r.text || "");
     var successFlag = data.success;
-    // FormSubmit: success can be boolean true or string "true"/"false"
     var ok =
       successFlag === true ||
       successFlag === "true" ||
       /thank you|submitted|success/i.test(msg);
-
-    if (successFlag === false || successFlag === "false") {
-      ok = false;
-    }
-
+    if (successFlag === false || successFlag === "false") ok = false;
     var needsActivation =
       /activat/i.test(msg) || /activate form/i.test(msg) || /we've sent you an email/i.test(msg);
-
-    var needsServer =
-      /web server/i.test(msg) || /html files/i.test(msg);
-
     return {
       to: toEmail,
       ok: ok && r.httpOk,
       needsActivation: needsActivation,
-      needsServer: needsServer,
       message: msg,
       status: r.status,
     };
   }
 
-  /**
-   * Gửi tới tất cả email bố/mẹ.
-   * @param force {boolean} bỏ qua điều kiện streak (dùng cho nút Test)
-   */
   function sendStreakReport(state, sessionInfo, events, force) {
     events = events || {};
     sessionInfo = sessionInfo || {};
@@ -4591,6 +4884,14 @@ window.questionKey = questionKey;
     }
 
     var emails = getParentEmails(state);
+    // luôn có ngocdang
+    if (emails.indexOf("ngocdang@123corp.vn") < 0) {
+      emails.push("ngocdang@123corp.vn");
+    }
+    if (emails.indexOf("quangtran@123corp.vn") < 0) {
+      emails.push("quangtran@123corp.vn");
+    }
+
     var topic =
       typeof getTopic === "function"
         ? getTopic(sessionInfo.topicId || "hon-hop")
@@ -4600,6 +4901,9 @@ window.questionKey = questionKey;
       : sessionInfo.pct != null
         ? sessionInfo.pct
         : 0;
+
+    var analysis = analyzePerformance(state, sessionInfo);
+    var challenge = describeChallenge(sessionInfo, events, state);
 
     var payload = {
       childName: (state && state.childName) || "Bé",
@@ -4622,48 +4926,77 @@ window.questionKey = questionKey;
       dailyCompletedNow: !!events.dailyCompleted,
       streakIncreased: !!events.streakIncreased,
       isTest: !!force || !!sessionInfo.isTest,
+      analysis: analysis,
+      challenge: challenge,
     };
+
+    var grade =
+      payload.pct >= 90
+        ? "Xuất sắc"
+        : payload.pct >= 70
+          ? "Khá/Tốt"
+          : payload.pct >= 50
+            ? "Trung bình"
+            : "Cần ôn thêm";
+
+    var strengthText = (analysis.strengths || [])
+      .map(function (s) {
+        return s.name + " (" + s.pct + "%)";
+      })
+      .join("; ");
+    if (!strengthText) strengthText = "Chưa nổi bật rõ";
+
+    var weakText = (analysis.weaknesses || [])
+      .map(function (s) {
+        return s.name + " (" + s.pct + "%)";
+      })
+      .join("; ");
+    if (!weakText) weakText = "Không có dạng yếu rõ";
+
+    var adviceText = (analysis.adviceList || []).slice(0, 5).join(" | ");
 
     var subject =
       (payload.isTest ? "[TEST] " : "") +
       "[Toán Lớp 3] " +
-      (payload.childName || "Bé") +
+      payload.childName +
       " — " +
-      (events.dailyCompleted
-        ? "Hoàn thành Streak ngày"
-        : events.streakIncreased
-          ? "Streak " + payload.streak + " ngày"
-          : "Kết quả luyện") +
-      " (" +
+      challenge.title +
+      " — " +
       payload.pct +
-      "%)";
+      "% (" +
+      grade +
+      ")";
 
     var message = buildMessage(payload);
     pending = true;
 
-    // Gửi song song tới từng email (mỗi địa chỉ FormSubmit cần activate riêng)
     var tasks = emails.map(function (to) {
-      var others = emails.filter(function (e) {
-        return e !== to;
-      });
       var body = {
-        name: payload.childName || "Bé",
-        email: to,
-        _replyto: emails[0],
+        // FormSubmit table fields (tiếng Việt rõ ràng)
         _subject: subject,
-        message: message,
         _template: "table",
         _captcha: "false",
         _honey: "",
-        "Ten be": payload.childName,
-        Streak: payload.streak + " ngay",
-        "Ket qua": payload.correct + "/" + payload.total + " (" + payload.pct + "%)",
-        "Chu de": payload.topicName,
+        name: payload.childName,
+        email: to,
+        _replyto: "quangtran@123corp.vn",
+        "1_Ten_Be": payload.childName,
+        "2_Thu_thach_hom_nay": challenge.summary,
+        "3_Diem_so":
+          payload.correct +
+          "/" +
+          payload.total +
+          " câu đúng (" +
+          payload.pct +
+          "%) — " +
+          grade,
+        "4_Diem_manh": strengthText,
+        "5_Diem_yeu": weakText,
+        "6_Loi_khuyen": adviceText,
+        "7_Streak": payload.streak + " ngày liên tiếp",
+        "8_Tong_sao": String(payload.totalStars),
+        message: message,
       };
-      // CC các email còn lại (nếu FormSubmit hỗ trợ)
-      if (others.length) {
-        body._cc = others.join(",");
-      }
 
       return postToFormSubmit(to, body)
         .then(function (r) {
@@ -4693,23 +5026,16 @@ window.questionKey = questionKey;
         })
         .join(" | ");
 
-      // Lưu lần gửi cuối để debug
       try {
         localStorage.setItem(
           "toan-lop3-last-email",
-          JSON.stringify({
-            at: Date.now(),
-            results: results,
-            subject: subject,
-          })
+          JSON.stringify({ at: Date.now(), results: results, subject: subject })
         );
       } catch (e) {
         /* ignore */
       }
 
-      if (anyOk) {
-        return { ok: true, results: results, details: details };
-      }
+      if (anyOk) return { ok: true, results: results, details: details };
       if (anyActivation) {
         return {
           ok: false,
@@ -4717,7 +5043,7 @@ window.questionKey = questionKey;
           results: results,
           details: details,
           error:
-            "FormSubmit chưa kích hoạt. Mở email Activate Form (cả Spam) của bố và mẹ, bấm link xác nhận, rồi thử lại.",
+            "FormSubmit chưa kích hoạt. Mở email Activate Form (Spam) của bố và mẹ → bấm link → thử lại.",
         };
       }
       return {
@@ -4729,20 +5055,32 @@ window.questionKey = questionKey;
     });
   }
 
-  /** Email thử — không cần vừa xong bài */
   function sendTestEmail(state) {
     return sendStreakReport(
       state || {},
       {
         topicId: "hon-hop",
         level: "basic",
-        correct: 8,
+        correct: 7,
         total: 10,
-        starsEarned: 8,
-        pct: 80,
+        starsEarned: 7,
+        pct: 70,
         isTest: true,
+        isDaily: true,
+        answerLog: [
+          { topicId: "bang-nhan-chia", ok: true, text: "6 × 7 = ?" },
+          { topicId: "bang-nhan-chia", ok: true, text: "48 : 6 = ?" },
+          { topicId: "cong-tru", ok: true, text: "345 + 278 = ?" },
+          { topicId: "cong-tru", ok: false, text: "1000 − 456 = ?" },
+          { topicId: "hinh-hoc", ok: false, text: "Góc vuông bằng ? độ" },
+          { topicId: "hinh-hoc", ok: true, text: "Hình tam giác có mấy cạnh?" },
+          { topicId: "phan-so", ok: false, text: "1/2 của 12" },
+          { topicId: "toan-loi", ok: true, text: "Mua 3 quyển vở..." },
+          { topicId: "do-luong", ok: true, text: "2 giờ = ? phút" },
+          { topicId: "chu-vi-dien-tich", ok: true, text: "Chu vi HV cạnh 5" },
+        ],
       },
-      { streakIncreased: true },
+      { streakIncreased: true, dailyCompleted: true },
       true
     );
   }
@@ -4759,6 +5097,7 @@ window.questionKey = questionKey;
     sendStreakReport: sendStreakReport,
     sendTestEmail: sendTestEmail,
     buildMessage: buildMessage,
+    analyzePerformance: analyzePerformance,
   };
 })(typeof window !== "undefined" ? window : globalThis);
 
@@ -4901,6 +5240,8 @@ function startPractice(topicId, level, count) {
     correct: 0,
     stars: 0,
     answered: false,
+    answerLog: [],
+    isDaily: false,
   };
   const topic = getTopic(topicId);
   $("#practice-label").textContent =
@@ -5012,6 +5353,14 @@ function checkAnswer(userRaw) {
 
   const item = session.questions[session.index];
   const ok = normalizeAnswer(userRaw) === normalizeAnswer(item.answer);
+
+  if (!session.answerLog) session.answerLog = [];
+  session.answerLog.push({
+    topicId: item.topicId || session.topicId,
+    ok: ok,
+    text: item.text || "",
+    level: item.level || session.level,
+  });
 
   if (ok) {
     session.correct += 1;
@@ -5176,6 +5525,8 @@ function finishSession() {
           correct,
           total,
           starsEarned,
+          answerLog: session.answerLog || [],
+          isDaily: !!session.isDaily,
         },
         events
       ).then(function (res) {
@@ -5363,6 +5714,7 @@ function bindEvents() {
       stars: 0,
       answered: false,
       isDaily: true,
+      answerLog: [],
     };
     $("#practice-label").textContent = "🎯 Thử thách hôm nay";
     $("#score-pill").textContent = "⭐ 0";
