@@ -49,10 +49,10 @@ Hoặc chỉ dùng trình duyệt + Git cũng được (phần B + C bên dướ
 5. GitHub hiện trang trống — **giữ tab này**, sẽ cần URL dạng:
 
 ```text
-https://github.com/TEN-USER-CUA-ANH/toan-lop3.git
+https://github.com/quangtran-123corp/toan-lop3.git
 ```
 
-*(Thay `TEN-USER-CUA-ANH` bằng username GitHub của anh.)*
+*(Repo thực tế của project này.)*
 
 ---
 
@@ -93,7 +93,7 @@ git commit -m "Lan dau: app luyen Toan lop 3"
 **Thay URL cho đúng repo của anh:**
 
 ```powershell
-git remote add origin https://github.com/TEN-USER-CUA-ANH/toan-lop3.git
+git remote add origin https://github.com/quangtran-123corp/toan-lop3.git
 git push -u origin main
 ```
 
@@ -120,14 +120,14 @@ Sau khi push xong, F5 trang repo trên GitHub: sẽ thấy các file `index.html
 7. Đợi 1–2 phút, refresh trang Pages — sẽ thấy link:
 
 ```text
-https://TEN-USER-CUA-ANH.github.io/toan-lop3/
+https://quangtran-123corp.github.io/toan-lop3/
 ```
 
 8. Mở link bằng Chrome trên máy anh thử trước  
 9. Trên **iPad** của bé: Safari → dán link → **Chia sẻ** → **Thêm vào Màn hình chính** (như app)
 
 > File chính đã gộp sẵn: có thể mở trực tiếp  
-> `https://TEN-USER-CUA-ANH.github.io/toan-lop3/ToanLop3.html`  
+> `https://quangtran-123corp.github.io/toan-lop3/ToanLop3.html`  
 > hoặc `index.html` (cùng nội dung).
 
 ---

@@ -4,10 +4,21 @@ App luyện Toán **Cơ bản + Nâng cao** cho học sinh chuẩn bị / đang 
 
 Bé có thể tự luyện **mỗi ngày**: thử thách 10 câu, chọn chủ đề, nhận sao, giữ chuỗi ngày luyện (streak).
 
-## Cách mở app (không cần cài đặt)
+## Link cho bé (iPad / laptop)
+
+| | URL |
+|---|-----|
+| **Repo GitHub** | https://github.com/quangtran-123corp/toan-lop3 |
+| **App online (GitHub Pages)** | https://quangtran-123corp.github.io/toan-lop3/ |
+| **File gộp 1 trang** | https://quangtran-123corp.github.io/toan-lop3/ToanLop3.html |
+
+> Trên iPad: mở Safari → dán link app → **Chia sẻ** → **Thêm vào Màn hình chính**.  
+> Nếu link Pages báo 404: vào repo → **Settings → Pages** → Source **Deploy from a branch** → Branch **main** / **/(root)** → Save, đợi 1–2 phút.
+
+## Cách mở app trên máy (local)
 
 1. Mở thư mục `toan-lop3`
-2. **Double-click** file `index.html`
+2. **Double-click** file `index.html` hoặc `ToanLop3.html`
 3. Chọn trình duyệt **Chrome** hoặc **Microsoft Edge**
 
 Trên trang chủ bạn sẽ thấy ngay:
@@ -16,6 +27,20 @@ Trên trang chủ bạn sẽ thấy ngay:
 - Nút tím **Bắt đầu thử thách 🚀**
 
 > Hoặc double-click `start.bat` nếu muốn chạy qua máy chủ local.
+
+## Cập nhật code lên GitHub (phụ huynh)
+
+Sau khi sửa app trên máy:
+
+```powershell
+cd C:\AIBTest\toan-lop3
+node build-single.js
+git add .
+git commit -m "Cap nhat app"
+git push
+```
+
+Hướng dẫn chi tiết: xem file `HUONG-DAN-GITHUB.md`.
 
 ## Tính năng
 
