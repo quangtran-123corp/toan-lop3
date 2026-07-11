@@ -417,12 +417,12 @@
   }
 
   function postWeb3Forms(accessKey, fields) {
-    // Chỉ các key cho phép — tuyệt đối không gửi field lẻ trùng message
+    // Chỉ các key cần thiết — không gửi field lẻ (Tên bé, Điểm số...) để tránh double
     var body = {
       access_key: accessKey,
       subject: fields.subject || "Báo cáo Toán Lớp 3",
-      // Web3Forms hiển thị nội dung chính qua "message" / "content"
-      // Không gửi name, email, Tên bé, Điểm số... để tránh double
+      // Tên người gửi hiển thị trong email (không phải "Notifications")
+      from_name: fields.from_name || "Toán Lớp 3 App",
       message: fields.message || "",
     };
 
@@ -552,6 +552,7 @@
 
     var fieldsBase = {
       subject: subject,
+      from_name: "Toán Lớp 3 App",
       message: message,
     };
 
