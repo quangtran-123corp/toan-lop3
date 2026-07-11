@@ -4750,6 +4750,7 @@ window.questionKey = questionKey;
     return { title: name, level: level, summary: parts.join(" · ") };
   }
 
+  /** Một bản nội dung gọn — không lặp field */
   function buildMessage(payload) {
     var a = payload.analysis || {
       strengths: [],
@@ -4760,120 +4761,106 @@ window.questionKey = questionKey;
       longWeak: [],
     };
     var ch = payload.challenge || {};
-    var lines = [];
+    var grade =
+      payload.pct >= 90
+        ? "Xuất sắc"
+        : payload.pct >= 70
+          ? "Khá/Tốt"
+          : payload.pct >= 50
+            ? "Trung bình"
+            : "Cần ôn thêm";
 
-    lines.push("══════════════════════════════════════");
-    lines.push("  BÁO CÁO KẾT QUẢ LUYỆN TOÁN LỚP 3");
-    lines.push("  Kết nối tri thức với cuộc sống");
-    lines.push("══════════════════════════════════════");
-    lines.push("");
-    lines.push("1) TÊN BÉ");
-    lines.push("   " + (payload.childName || "Bé"));
-    lines.push("");
-    lines.push("2) THỬ THÁCH / BÀI HÔM NAY");
-    lines.push("   " + (ch.summary || payload.topicName || "—"));
-    lines.push("   Thời gian: " + (payload.when || ""));
-    lines.push("");
-    lines.push("3) ĐIỂM SỐ");
-    lines.push(
-      "   " +
+    var manh = [];
+    (a.strengths || []).forEach(function (s) {
+      manh.push(s.name + " " + s.pct + "%");
+    });
+    (a.longStrong || []).slice(0, 2).forEach(function (s) {
+      var dup = (a.strengths || []).some(function (x) {
+        return x.id === s.id;
+      });
+      if (!dup) manh.push(s.name + " " + s.pct + "% (lịch sử)");
+    });
+    if (!manh.length) manh.push("Chưa nổi bật rõ");
+
+    var yeu = [];
+    (a.weaknesses || []).forEach(function (s) {
+      var line = s.name + " " + s.pct + "%";
+      if (s.wrongSamples && s.wrongSamples[0]) {
+        line += " — VD: " + s.wrongSamples[0];
+      }
+      yeu.push(line);
+    });
+    (a.longWeak || []).slice(0, 2).forEach(function (s) {
+      var dup = (a.weaknesses || []).some(function (x) {
+        return x.id === s.id;
+      });
+      if (!dup) yeu.push(s.name + " " + s.pct + "% (lịch sử)");
+    });
+    if (!yeu.length) yeu.push("Không có dạng yếu rõ");
+
+    var chiTiet = (a.sessionStats || [])
+      .map(function (s) {
+        return s.name + " " + s.correct + "/" + s.total + " (" + s.pct + "%)";
+      })
+      .join("; ");
+
+    var lines = [
+      "BÁO CÁO TOÁN LỚP 3 (KNTT)",
+      "",
+      "• Tên bé: " + (payload.childName || "Bé"),
+      "• Bài/thử thách: " + (ch.summary || payload.topicName || "—"),
+      "• Thời gian: " + (payload.when || ""),
+      "• Điểm: " +
         payload.correct +
         "/" +
         payload.total +
-        " câu đúng  |  Chính xác: " +
+        " (" +
         payload.pct +
-        "%"
-    );
-    lines.push(
-      "   Xếp loại: " +
-        (payload.pct >= 90
-          ? "Xuất sắc"
-          : payload.pct >= 70
-            ? "Khá / Tốt"
-            : payload.pct >= 50
-              ? "Trung bình"
-              : "Cần ôn thêm")
-    );
-    lines.push("   Sao buổi này: +" + payload.starsEarned);
-    lines.push(
-      "   Streak: " + payload.streak + " ngày  |  Tổng sao: " + payload.totalStars
-    );
+        "%) — " +
+        grade,
+      "• Sao buổi này: +" +
+        payload.starsEarned +
+        " | Streak: " +
+        payload.streak +
+        " ngày | Tổng sao: " +
+        payload.totalStars,
+    ];
+
+    if (chiTiet) {
+      lines.push("• Chi tiết dạng bài: " + chiTiet);
+    }
+
+    lines.push("• Điểm mạnh: " + manh.join("; "));
+    lines.push("• Điểm yếu: " + yeu.join("; "));
     lines.push("");
-    lines.push("4) CHI TIẾT THEO DẠNG BÀI (buổi này)");
-    if (a.sessionStats && a.sessionStats.length) {
-      a.sessionStats.forEach(function (s) {
-        lines.push(
-          "   • " + s.name + ": " + s.correct + "/" + s.total + " (" + s.pct + "%)"
-        );
-      });
-    } else {
-      lines.push("   (Không có chi tiết từng dạng)");
-    }
-    lines.push("");
-    lines.push("5) ĐIỂM MẠNH");
-    if (a.strengths && a.strengths.length) {
-      a.strengths.forEach(function (s) {
-        lines.push("   ✓ " + s.name + " — " + s.pct + "% đúng buổi này");
-      });
-    } else {
-      lines.push("   • Chưa nổi bật rõ; cần luyện đều thêm.");
-    }
-    if (a.longStrong && a.longStrong.length) {
-      lines.push("   (Lịch sử tích lũy tốt:)");
-      a.longStrong.forEach(function (s) {
-        lines.push(
-          "   ✓ " + s.name + " — " + s.pct + "% (" + s.correct + "/" + s.total + ")"
-        );
-      });
-    }
-    lines.push("");
-    lines.push("6) ĐIỂM YẾU");
-    if (a.weaknesses && a.weaknesses.length) {
-      a.weaknesses.forEach(function (s) {
-        lines.push("   ! " + s.name + " — " + s.pct + "% đúng buổi này");
-        if (s.wrongSamples && s.wrongSamples.length) {
-          s.wrongSamples.forEach(function (w) {
-            lines.push("      VD câu sai: " + w);
-          });
-        }
-      });
-    } else {
-      lines.push("   • Không có dạng yếu rõ trong buổi này.");
-    }
-    if (a.longWeak && a.longWeak.length) {
-      lines.push("   (Cần theo dõi lâu dài:)");
-      a.longWeak.forEach(function (s) {
-        lines.push(
-          "   ! " + s.name + " — " + s.pct + "% (" + s.correct + "/" + s.total + ")"
-        );
-      });
-    }
-    lines.push("");
-    lines.push("7) LỜI KHUYÊN CHO BỐ MẸ");
-    (a.adviceList || []).forEach(function (tip, idx) {
-      lines.push("   " + (idx + 1) + ". " + tip);
+    lines.push("Lời khuyên:");
+    (a.adviceList || []).slice(0, 4).forEach(function (tip, i) {
+      lines.push(i + 1 + ") " + tip);
     });
-    lines.push("");
+
     if (payload.dailyCompletedNow) {
-      lines.push(">>> Bé vừa HOÀN THÀNH thử thách / mục tiêu ngày!");
       lines.push("");
+      lines.push("(Đã hoàn thành thử thách/mục tiêu ngày)");
     }
     if (payload.isTest) {
-      lines.push(">>> Đây là EMAIL THỬ từ app (Web3Forms).");
       lines.push("");
+      lines.push("(Email thử)");
     }
+
+    lines.push("");
     lines.push("App: https://quangtran-123corp.github.io/toan-lop3/");
-    lines.push("(Gửi qua Web3Forms — Toán Lớp 3 KNTT)");
     return lines.join("\n");
   }
 
   function postWeb3Forms(accessKey, fields) {
-    var body = {};
-    for (var k in fields) {
-      if (Object.prototype.hasOwnProperty.call(fields, k)) body[k] = fields[k];
-    }
-    body.access_key = accessKey;
-    body.botcheck = false;
+    // Chỉ các key cho phép — tuyệt đối không gửi field lẻ trùng message
+    var body = {
+      access_key: accessKey,
+      subject: fields.subject || "Báo cáo Toán Lớp 3",
+      // Web3Forms hiển thị nội dung chính qua "message" / "content"
+      // Không gửi name, email, Tên bé, Điểm số... để tránh double
+      message: fields.message || "",
+    };
 
     return fetch(WEB3FORMS_URL, {
       method: "POST",
@@ -4982,8 +4969,7 @@ window.questionKey = questionKey;
             ? "Trung bình"
             : "Cần ôn thêm";
 
-    // Chỉ gửi 1 bản nội dung (message đã ghép sẵn) — không gửi thêm field lẻ
-    // để tránh email bị lặp 2 lần (field riêng + message tổng hợp).
+    // CHỈ 1 bản: subject + message (nội dung gọn). Không field lẻ.
     var message = buildMessage(payload);
 
     var subject =
@@ -5002,7 +4988,6 @@ window.questionKey = questionKey;
 
     var fieldsBase = {
       subject: subject,
-      from_name: "Toán Lớp 3 App",
       message: message,
     };
 
