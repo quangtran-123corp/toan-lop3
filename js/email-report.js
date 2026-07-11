@@ -1,25 +1,57 @@
 /**
- * Gửi báo cáo kết quả luyện Toán về email phụ huynh.
- * Dùng FormSubmit (miễn phí, không cần server riêng).
- * Lần đầu: bố mở email và bấm xác nhận FormSubmit một lần.
+ * Gửi báo cáo kết quả luyện Toán về email bố + mẹ.
+ * Dùng FormSubmit (miễn phí).
+ *
+ * Lần đầu mỗi địa chỉ email cần MỞ MAIL "Activate Form" và bấm xác nhận.
+ * (Kiểm tra cả hộp Spam / Quảng cáo / Junk)
  */
 (function (global) {
-  var DEFAULT_EMAIL = "quangtran@123corp.vn";
+  var DEFAULT_EMAILS = ["quangtran@123corp.vn", "ngocdang@123corp.vn"];
   var pending = false;
 
-  function getParentEmail(state) {
-    var e = (state && state.parentEmail) || DEFAULT_EMAIL;
-    e = String(e).trim();
-    if (!e || e.indexOf("@") < 0) return DEFAULT_EMAIL;
-    return e;
+  function uniqueEmails(list) {
+    var seen = {};
+    var out = [];
+    for (var i = 0; i < list.length; i++) {
+      var e = String(list[i] || "")
+        .trim()
+        .toLowerCase();
+      if (!e || e.indexOf("@") < 1) continue;
+      if (seen[e]) continue;
+      seen[e] = true;
+      out.push(e);
+    }
+    return out;
   }
 
-  function shouldNotify(state, events) {
+  /** Danh sách email bố/mẹ từ state (chuỗi phân tách bằng dấu phẩy) */
+  function getParentEmails(state) {
+    var raw = "";
+    if (state) {
+      if (state.parentEmails) raw = state.parentEmails;
+      else if (state.parentEmail) raw = state.parentEmail;
+    }
+    var parts = String(raw || "")
+      .split(/[,;\n]+/)
+      .map(function (s) {
+        return s.trim();
+      })
+      .filter(Boolean);
+    if (!parts.length) return DEFAULT_EMAILS.slice();
+    var list = uniqueEmails(parts);
+    return list.length ? list : DEFAULT_EMAILS.slice();
+  }
+
+  function getParentEmailDisplay(state) {
+    return getParentEmails(state).join(", ");
+  }
+
+  function shouldNotify(state, events, force) {
+    if (force) return true;
     if (!state || state.emailNotify === false) return false;
-    // Gửi khi: hoàn thành thử thách/streak ngày, hoặc streak tăng (ngày luyện mới)
+    // Mặc định: gửi sau MỌI buổi hoàn thành (emailEverySession mặc định true)
+    if (state.emailEverySession !== false) return true;
     if (events && (events.dailyCompleted || events.streakIncreased)) return true;
-    // Tuỳ chọn: gửi mọi buổi
-    if (state.emailEverySession) return true;
     return false;
   }
 
@@ -39,71 +71,136 @@
       "Sao buổi này: +" + payload.starsEarned,
       "",
       "--- Streak & tổng ---",
-      "🔥 Streak: " + payload.streak + " ngày liên tiếp",
-      "⭐ Tổng sao: " + payload.totalStars,
-      "📚 Số buổi hôm nay: " + payload.todaySessions,
-      "🎯 Thử thách ngày: " +
+      "Streak: " + payload.streak + " ngày liên tiếp",
+      "Tong sao: " + payload.totalStars,
+      "So buoi hom nay: " + payload.todaySessions,
+      "Thu thach ngay: " +
         (payload.dailyDone
-          ? "ĐÃ HOÀN THÀNH (+ thưởng)"
-          : (payload.dailyProgress || "0") + " / " + (payload.dailyGoal || 10) + " câu đúng"),
+          ? "DA HOAN THANH"
+          : (payload.dailyProgress || "0") + " / " + (payload.dailyGoal || 10) + " cau dung"),
       "",
     ];
     if (payload.dailyCompletedNow) {
-      lines.push(">>> Bé vừa HOÀN THÀNH thử thách / streak ngày hôm nay!");
+      lines.push(">>> Be vua HOAN THANH thu thach / streak ngay hom nay!");
       lines.push("");
     }
     if (payload.streakIncreased) {
-      lines.push(">>> Streak vừa được cập nhật (ngày luyện mới).");
+      lines.push(">>> Streak vua duoc cap nhat (ngay luyen moi).");
+      lines.push("");
+    }
+    if (payload.isTest) {
+      lines.push(">>> DAY LA EMAIL THU (Test) tu app.");
       lines.push("");
     }
     lines.push("App: https://quangtran-123corp.github.io/toan-lop3/");
     lines.push("");
-    lines.push("(Email tự động từ app Toán Lớp 3)");
+    lines.push("(Email tu dong tu app Toan Lop 3)");
     return lines.join("\n");
   }
 
+  function postToFormSubmit(toEmail, body) {
+    var url = "https://formsubmit.co/ajax/" + encodeURIComponent(toEmail);
+    return fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(body),
+    }).then(function (res) {
+      return res.text().then(function (text) {
+        var data = null;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          data = { raw: text };
+        }
+        return { httpOk: res.ok, status: res.status, data: data, text: text };
+      });
+    });
+  }
+
+  function interpretResult(r, toEmail) {
+    var data = r.data || {};
+    var msg = String(data.message || data.raw || r.text || "");
+    var successFlag = data.success;
+    // FormSubmit: success can be boolean true or string "true"/"false"
+    var ok =
+      successFlag === true ||
+      successFlag === "true" ||
+      /thank you|submitted|success/i.test(msg);
+
+    if (successFlag === false || successFlag === "false") {
+      ok = false;
+    }
+
+    var needsActivation =
+      /activat/i.test(msg) || /activate form/i.test(msg) || /we've sent you an email/i.test(msg);
+
+    var needsServer =
+      /web server/i.test(msg) || /html files/i.test(msg);
+
+    return {
+      to: toEmail,
+      ok: ok && r.httpOk,
+      needsActivation: needsActivation,
+      needsServer: needsServer,
+      message: msg,
+      status: r.status,
+    };
+  }
+
   /**
-   * @returns {Promise<{ok:boolean, skipped?:boolean, error?:string}>}
+   * Gửi tới tất cả email bố/mẹ.
+   * @param force {boolean} bỏ qua điều kiện streak (dùng cho nút Test)
    */
-  function sendStreakReport(state, sessionInfo, events) {
+  function sendStreakReport(state, sessionInfo, events, force) {
     events = events || {};
-    if (!shouldNotify(state, events)) {
+    sessionInfo = sessionInfo || {};
+
+    if (!shouldNotify(state, events, force)) {
       return Promise.resolve({ ok: true, skipped: true });
     }
-    if (pending) {
+    if (pending && !force) {
       return Promise.resolve({ ok: true, skipped: true });
     }
 
-    var to = getParentEmail(state);
+    var emails = getParentEmails(state);
     var topic =
       typeof getTopic === "function"
-        ? getTopic(sessionInfo.topicId)
-        : { name: sessionInfo.topicId, emoji: "" };
+        ? getTopic(sessionInfo.topicId || "hon-hop")
+        : { name: sessionInfo.topicId || "Hỗn hợp", emoji: "🎲" };
     var pct = sessionInfo.total
       ? Math.round((sessionInfo.correct / sessionInfo.total) * 100)
-      : 0;
+      : sessionInfo.pct != null
+        ? sessionInfo.pct
+        : 0;
 
     var payload = {
-      childName: state.childName || "Bé",
+      childName: (state && state.childName) || "Bé",
       when: new Date().toLocaleString("vi-VN"),
-      topicId: sessionInfo.topicId,
+      topicId: sessionInfo.topicId || "hon-hop",
       topicName: (topic.emoji ? topic.emoji + " " : "") + (topic.name || sessionInfo.topicId),
-      level: sessionInfo.level,
-      correct: sessionInfo.correct,
-      total: sessionInfo.total,
+      level: sessionInfo.level || "basic",
+      correct: sessionInfo.correct != null ? sessionInfo.correct : 0,
+      total: sessionInfo.total != null ? sessionInfo.total : 0,
       pct: pct,
-      starsEarned: sessionInfo.starsEarned,
-      streak: state.streak,
-      totalStars: state.stars,
-      todaySessions: state.todaySessions,
-      dailyDone: state.dailyCompletedDate === (typeof todayStr === "function" ? todayStr() : ""),
-      dailyProgress: state.dailyCorrectToday,
-      dailyGoal: state.dailyGoal,
+      starsEarned: sessionInfo.starsEarned != null ? sessionInfo.starsEarned : 0,
+      streak: (state && state.streak) || 0,
+      totalStars: (state && state.stars) || 0,
+      todaySessions: (state && state.todaySessions) || 0,
+      dailyDone:
+        state &&
+        state.dailyCompletedDate === (typeof todayStr === "function" ? todayStr() : ""),
+      dailyProgress: (state && state.dailyCorrectToday) || 0,
+      dailyGoal: (state && state.dailyGoal) || 10,
       dailyCompletedNow: !!events.dailyCompleted,
       streakIncreased: !!events.streakIncreased,
+      isTest: !!force || !!sessionInfo.isTest,
     };
 
     var subject =
+      (payload.isTest ? "[TEST] " : "") +
       "[Toán Lớp 3] " +
       (payload.childName || "Bé") +
       " — " +
@@ -116,62 +213,126 @@
       payload.pct +
       "%)";
 
-    var body = {
-      name: payload.childName || "Bé",
-      email: to,
-      _replyto: to,
-      _subject: subject,
-      message: buildMessage(payload),
-      // FormSubmit options
-      _template: "box",
-      _captcha: "false",
-      // Trường phụ để bảng đẹp hơn (một số template hỗ trợ)
-      "Tên bé": payload.childName,
-      Streak: payload.streak + " ngày",
-      "Kết quả": payload.correct + "/" + payload.total + " (" + payload.pct + "%)",
-      "Chủ đề": payload.topicName,
-    };
-
+    var message = buildMessage(payload);
     pending = true;
-    var url = "https://formsubmit.co/ajax/" + encodeURIComponent(to);
 
-    return fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(body),
-    })
-      .then(function (res) {
-        pending = false;
-        if (!res.ok) {
-          return res.text().then(function (t) {
-            throw new Error(t || "HTTP " + res.status);
-          });
-        }
-        return res.json().catch(function () {
-          return { success: true };
+    // Gửi song song tới từng email (mỗi địa chỉ FormSubmit cần activate riêng)
+    var tasks = emails.map(function (to) {
+      var others = emails.filter(function (e) {
+        return e !== to;
+      });
+      var body = {
+        name: payload.childName || "Bé",
+        email: to,
+        _replyto: emails[0],
+        _subject: subject,
+        message: message,
+        _template: "table",
+        _captcha: "false",
+        _honey: "",
+        "Ten be": payload.childName,
+        Streak: payload.streak + " ngay",
+        "Ket qua": payload.correct + "/" + payload.total + " (" + payload.pct + "%)",
+        "Chu de": payload.topicName,
+      };
+      // CC các email còn lại (nếu FormSubmit hỗ trợ)
+      if (others.length) {
+        body._cc = others.join(",");
+      }
+
+      return postToFormSubmit(to, body)
+        .then(function (r) {
+          return interpretResult(r, to);
+        })
+        .catch(function (err) {
+          return {
+            to: to,
+            ok: false,
+            needsActivation: false,
+            message: err && err.message ? err.message : String(err),
+          };
         });
-      })
-      .then(function () {
-        return { ok: true };
-      })
-      .catch(function (err) {
-        pending = false;
-        console.warn("Gửi email thất bại:", err);
+    });
+
+    return Promise.all(tasks).then(function (results) {
+      pending = false;
+      var anyOk = results.some(function (r) {
+        return r.ok;
+      });
+      var anyActivation = results.some(function (r) {
+        return r.needsActivation;
+      });
+      var details = results
+        .map(function (r) {
+          return r.to + ": " + (r.ok ? "OK" : r.message || "loi");
+        })
+        .join(" | ");
+
+      // Lưu lần gửi cuối để debug
+      try {
+        localStorage.setItem(
+          "toan-lop3-last-email",
+          JSON.stringify({
+            at: Date.now(),
+            results: results,
+            subject: subject,
+          })
+        );
+      } catch (e) {
+        /* ignore */
+      }
+
+      if (anyOk) {
+        return { ok: true, results: results, details: details };
+      }
+      if (anyActivation) {
         return {
           ok: false,
-          error: err && err.message ? err.message : String(err),
+          needsActivation: true,
+          results: results,
+          details: details,
+          error:
+            "FormSubmit chưa kích hoạt. Mở email Activate Form (cả Spam) của bố và mẹ, bấm link xác nhận, rồi thử lại.",
         };
-      });
+      }
+      return {
+        ok: false,
+        results: results,
+        details: details,
+        error: details || "Không gửi được email",
+      };
+    });
+  }
+
+  /** Email thử — không cần vừa xong bài */
+  function sendTestEmail(state) {
+    return sendStreakReport(
+      state || {},
+      {
+        topicId: "hon-hop",
+        level: "basic",
+        correct: 8,
+        total: 10,
+        starsEarned: 8,
+        pct: 80,
+        isTest: true,
+      },
+      { streakIncreased: true },
+      true
+    );
   }
 
   global.EmailReport = {
-    DEFAULT_EMAIL: DEFAULT_EMAIL,
-    getParentEmail: getParentEmail,
+    DEFAULT_EMAIL: DEFAULT_EMAILS[0],
+    DEFAULT_EMAILS: DEFAULT_EMAILS,
+    getParentEmail: function (state) {
+      return getParentEmails(state)[0];
+    },
+    getParentEmails: getParentEmails,
+    getParentEmailDisplay: getParentEmailDisplay,
     shouldNotify: shouldNotify,
     sendStreakReport: sendStreakReport,
+    sendTestEmail: sendTestEmail,
     buildMessage: buildMessage,
   };
 })(typeof window !== "undefined" ? window : globalThis);

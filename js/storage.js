@@ -4,10 +4,11 @@ function defaultState() {
   return {
     childName: "",
     sound: true,
-    // Email báo cáo cho bố/mẹ
-    parentEmail: "quangtran@123corp.vn",
-    emailNotify: true, // gửi khi hoàn thành streak / ngày luyện mới
-    emailEverySession: false, // true = gửi mọi buổi luyện
+    // Email báo cáo cho bố + mẹ (phân tách bằng dấu phẩy)
+    parentEmail: "quangtran@123corp.vn, ngocdang@123corp.vn",
+    parentEmails: "quangtran@123corp.vn, ngocdang@123corp.vn",
+    emailNotify: true,
+    emailEverySession: true, // gửi sau MỌI buổi hoàn thành
     stars: 0,
     streak: 0,
     lastPracticeDate: null,

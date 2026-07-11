@@ -374,7 +374,7 @@ function finishSession() {
     i < starCount ? "⭐" : "☆"
   ).join("");
 
-  // Dòng trạng thái gửi email cho bố
+  // Dòng trạng thái gửi email bố + mẹ
   let emailLine = $("#result-email-status");
   if (!emailLine) {
     emailLine = document.createElement("p");
@@ -388,17 +388,20 @@ function finishSession() {
   emailLine.textContent = "";
   emailLine.hidden = true;
 
-  // Gửi email khi hoàn thành streak / ngày luyện mới
+  // Gửi email sau mỗi buổi (mặc định bật) — bố + mẹ
   if (window.EmailReport && typeof EmailReport.sendStreakReport === "function") {
+    const emailsLabel =
+      typeof EmailReport.getParentEmailDisplay === "function"
+        ? EmailReport.getParentEmailDisplay(state)
+        : state.parentEmail || "bố/mẹ";
     const willSend =
       state.emailNotify !== false &&
-      (events.dailyCompleted || events.streakIncreased || state.emailEverySession);
+      (state.emailEverySession !== false ||
+        events.dailyCompleted ||
+        events.streakIncreased);
     if (willSend) {
       emailLine.hidden = false;
-      emailLine.textContent =
-        "📧 Đang gửi kết quả cho bố (" +
-        (state.parentEmail || EmailReport.DEFAULT_EMAIL) +
-        ")…";
+      emailLine.textContent = "📧 Đang gửi kết quả tới: " + emailsLabel + "…";
       EmailReport.sendStreakReport(
         state,
         {
@@ -416,13 +419,18 @@ function finishSession() {
           return;
         }
         if (res && res.ok) {
+          emailLine.textContent = "✅ Đã gửi kết quả về: " + emailsLabel;
+          toast("Đã gửi email cho bố & mẹ 📧");
+        } else if (res && res.needsActivation) {
           emailLine.textContent =
-            "✅ Đã gửi kết quả về email bố: " +
-            (state.parentEmail || EmailReport.DEFAULT_EMAIL);
-          toast("Đã gửi kết quả cho bố 📧");
+            "⚠️ Cần kích hoạt FormSubmit: mở email Activate Form tại " +
+            emailsLabel +
+            " (cả Spam), bấm link xác nhận, rồi làm lại 1 bài.";
+          toast("Cần bấm Activate Form trong email");
         } else {
           emailLine.textContent =
-            "⚠️ Chưa gửi được email. Lần đầu bố hãy kiểm tra hộp thư (kể cả Spam) và bấm xác nhận FormSubmit.";
+            "⚠️ Chưa gửi được email. " +
+            (res && res.error ? res.error : "Thử nút Gửi email thử trong Cài đặt.");
         }
       });
     }
@@ -473,17 +481,54 @@ function renderProgress() {
 function renderSettings() {
   $("#child-name").value = state.childName || "";
   $("#opt-sound").checked = state.sound !== false;
+  // Đồng bộ email bố+mẹ nếu state cũ chỉ có 1 email
+  if (
+    state.parentEmail &&
+    state.parentEmail.indexOf("ngocdang@123corp.vn") < 0 &&
+    state.parentEmail.indexOf("quangtran@123corp.vn") >= 0
+  ) {
+    state.parentEmail = "quangtran@123corp.vn, ngocdang@123corp.vn";
+    state.parentEmails = state.parentEmail;
+    saveState(state);
+  }
+  if (!state.parentEmail || !String(state.parentEmail).trim()) {
+    state.parentEmail = "quangtran@123corp.vn, ngocdang@123corp.vn";
+    state.parentEmails = state.parentEmail;
+  }
   const emailInput = $("#parent-email");
   if (emailInput) {
     emailInput.value =
       state.parentEmail ||
-      (window.EmailReport && EmailReport.DEFAULT_EMAIL) ||
-      "quangtran@123corp.vn";
+      (window.EmailReport &&
+        EmailReport.DEFAULT_EMAILS &&
+        EmailReport.DEFAULT_EMAILS.join(", ")) ||
+      "quangtran@123corp.vn, ngocdang@123corp.vn";
   }
   const optMail = $("#opt-email-notify");
   if (optMail) optMail.checked = state.emailNotify !== false;
   const optEvery = $("#opt-email-every");
-  if (optEvery) optEvery.checked = !!state.emailEverySession;
+  if (optEvery) optEvery.checked = state.emailEverySession !== false;
+  const lastEl = $("#email-last-status");
+  if (lastEl) {
+    try {
+      const last = JSON.parse(localStorage.getItem("toan-lop3-last-email") || "null");
+      if (last && last.at) {
+        lastEl.textContent =
+          "Lần gửi gần nhất: " +
+          new Date(last.at).toLocaleString("vi-VN") +
+          " — " +
+          (last.results || [])
+            .map(function (r) {
+              return r.to + (r.ok ? " ✓" : " ✗");
+            })
+            .join(", ");
+      } else {
+        lastEl.textContent = "Chưa gửi email lần nào từ máy này.";
+      }
+    } catch (e) {
+      lastEl.textContent = "";
+    }
+  }
 }
 
 // ——— Events ———
@@ -632,7 +677,9 @@ function bindEvents() {
     const emailInput = $("#parent-email");
     if (emailInput) {
       const v = emailInput.value.trim();
-      state.parentEmail = v || "quangtran@123corp.vn";
+      state.parentEmail =
+        v || "quangtran@123corp.vn, ngocdang@123corp.vn";
+      state.parentEmails = state.parentEmail;
     }
     const optMail = $("#opt-email-notify");
     if (optMail) state.emailNotify = optMail.checked;
@@ -647,11 +694,7 @@ function bindEvents() {
   });
   $("#opt-email-notify")?.addEventListener("change", () => {
     saveParentEmailSettings();
-    toast(
-      state.emailNotify
-        ? "Sẽ gửi email khi bé hoàn thành streak"
-        : "Đã tắt gửi email"
-    );
+    toast(state.emailNotify ? "Đã bật gửi email" : "Đã tắt gửi email");
   });
   $("#opt-email-every")?.addEventListener("change", () => {
     saveParentEmailSettings();
@@ -665,6 +708,55 @@ function bindEvents() {
     saveParentEmailSettings();
     toast("Đã lưu cài đặt email");
     sfx("pop");
+  });
+  $("#btn-test-email")?.addEventListener("click", () => {
+    saveParentEmailSettings();
+    sfx("unlock");
+    const btn = $("#btn-test-email");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Đang gửi…";
+    }
+    toast("Đang gửi email thử…");
+    if (!window.EmailReport || !EmailReport.sendTestEmail) {
+      toast("Lỗi: chưa tải module email");
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Gửi email thử ngay";
+      }
+      return;
+    }
+    EmailReport.sendTestEmail(state).then(function (res) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Gửi email thử ngay";
+      }
+      renderSettings();
+      if (res && res.ok) {
+        toast("Đã gửi email thử — kiểm tra hộp thư bố & mẹ");
+        alert(
+          "✅ Đã gửi email thử tới:\n" +
+            EmailReport.getParentEmailDisplay(state) +
+            "\n\nHãy kiểm tra Hộp thư đến và Spam."
+        );
+      } else if (res && res.needsActivation) {
+        alert(
+          "⚠️ FormSubmit CHƯA KÍCH HOẠT\n\n" +
+            "1. Mở email quangtran@123corp.vn và ngocdang@123corp.vn\n" +
+            "2. Tìm mail từ FormSubmit: \"Activate Form\" (cả thư mục Spam)\n" +
+            "3. Bấm link Activate trong mail\n" +
+            "4. Quay lại app bấm \"Gửi email thử ngay\" một lần nữa\n\n" +
+            (res.error || "")
+        );
+      } else {
+        alert(
+          "⚠️ Gửi email thất bại\n\n" +
+            (res && res.error ? res.error : "Thử lại sau.") +
+            "\n\nChi tiết: " +
+            (res && res.details ? res.details : "")
+        );
+      }
+    });
   });
 
   // Mở khóa audio trên iPad/Safari sau lần chạm đầu
@@ -700,6 +792,27 @@ function boot() {
       throw new Error("Không tải được bộ nhớ.");
     }
     state = ensureDayRollover(loadState());
+    // Cập nhật email bố + mẹ & gửi mọi buổi (cho bản đã cài trước đó)
+    var needSave = false;
+    if (
+      !state.parentEmail ||
+      String(state.parentEmail).indexOf("ngocdang@123corp.vn") < 0 ||
+      String(state.parentEmail).indexOf("quangtran@123corp.vn") < 0
+    ) {
+      state.parentEmail = "quangtran@123corp.vn, ngocdang@123corp.vn";
+      state.parentEmails = state.parentEmail;
+      needSave = true;
+    }
+    if (state.emailNotify === undefined) {
+      state.emailNotify = true;
+      needSave = true;
+    }
+    if (state.emailEverySession !== true) {
+      state.emailEverySession = true;
+      needSave = true;
+    }
+    if (needSave) saveState(state);
+
     bindEvents();
     renderHome();
     showScreen("home");
