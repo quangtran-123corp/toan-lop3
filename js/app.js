@@ -29,23 +29,25 @@ function toast(msg) {
   }, 2200);
 }
 
-function playTone(ok) {
-  if (!state.sound) return;
+function sfx(name, arg) {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.connect(g);
-    g.connect(ctx.destination);
-    o.frequency.value = ok ? 660 : 220;
-    o.type = ok ? "sine" : "triangle";
-    g.gain.value = 0.08;
-    o.start();
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
-    o.stop(ctx.currentTime + 0.26);
-  } catch {
+    if (!window.SoundFX) return;
+    if (name === "correct") SoundFX.playCorrect();
+    else if (name === "wrong") SoundFX.playWrong();
+    else if (name === "start") SoundFX.playStart();
+    else if (name === "click") SoundFX.playClick();
+    else if (name === "pop") SoundFX.playPop();
+    else if (name === "finish") SoundFX.playFinish(arg);
+    else if (name === "preview") SoundFX.playPreview();
+    else if (name === "unlock") SoundFX.unlock();
+  } catch (e) {
     /* ignore */
   }
+}
+
+// Tương thích
+function playTone(ok) {
+  sfx(ok ? "correct" : "wrong");
 }
 
 function confettiBurst() {
@@ -138,6 +140,7 @@ function startPractice(topicId, level, count) {
   $("#practice-label").textContent =
     `${topic.emoji} ${level === "basic" ? "Cơ bản" : "Nâng cao"}`;
   $("#score-pill").textContent = "⭐ 0";
+  sfx("start");
   showScreen("practice");
   renderQuestion();
 }
@@ -249,7 +252,7 @@ function checkAnswer(userRaw) {
     const gain = session.level === "advanced" ? 2 : 1;
     session.stars += gain;
     $("#score-pill").textContent = `⭐ ${session.stars}`;
-    playTone(true);
+    sfx("correct");
     showFeedback(true, item);
     $("#encourage").textContent = uiPick([
       "Giỏi quá! 🌟",
@@ -259,7 +262,7 @@ function checkAnswer(userRaw) {
       "Chính xác 100%! 🎉",
     ]);
   } else {
-    playTone(false);
+    sfx("wrong");
     showFeedback(false, item);
     $("#encourage").textContent = uiPick([
       "Chưa đúng — xem gợi ý rồi làm câu sau nhé!",
@@ -312,6 +315,7 @@ function nextQuestion() {
     finishSession();
     return;
   }
+  sfx("click");
   session.index += 1;
   renderQuestion();
 }
@@ -350,6 +354,8 @@ function finishSession() {
     title = "Cùng luyện tiếp!";
     msg = "Mỗi lần luyện là một bước tiến. Chọn Cơ bản để vững nền nhé!";
   }
+
+  sfx("finish", pct);
 
   $("#result-emoji").textContent = emoji;
   $("#result-title").textContent = title;
@@ -481,6 +487,7 @@ function bindEvents() {
     };
     $("#practice-label").textContent = "🎯 Thử thách hôm nay";
     $("#score-pill").textContent = "⭐ 0";
+    sfx("start");
     showScreen("practice");
     renderQuestion();
   });
@@ -528,14 +535,41 @@ function bindEvents() {
     toast(val ? `Đã lưu tên: ${val}` : "Đã xóa tên");
   }
 
-  $("#child-name").addEventListener("change", () => saveChildName($("#child-name")));
-  $("#home-child-name")?.addEventListener("change", () => saveChildName($("#home-child-name")));
-  $("#btn-save-name")?.addEventListener("click", () => saveChildName($("#home-child-name")));
+  $("#child-name").addEventListener("change", () => {
+    saveChildName($("#child-name"));
+    sfx("pop");
+  });
+  $("#home-child-name")?.addEventListener("change", () => {
+    saveChildName($("#home-child-name"));
+    sfx("pop");
+  });
+  $("#btn-save-name")?.addEventListener("click", () => {
+    saveChildName($("#home-child-name"));
+    sfx("pop");
+  });
 
   $("#opt-sound").addEventListener("change", () => {
     state.sound = $("#opt-sound").checked;
     saveState(state);
+    if (state.sound) {
+      sfx("unlock");
+      sfx("preview");
+      toast("Đã bật âm thanh 🔊");
+    } else {
+      toast("Đã tắt âm thanh");
+    }
   });
+
+  // Mở khóa audio trên iPad/Safari sau lần chạm đầu
+  function unlockAudioOnce() {
+    sfx("unlock");
+    document.removeEventListener("pointerdown", unlockAudioOnce);
+    document.removeEventListener("touchstart", unlockAudioOnce);
+    document.removeEventListener("keydown", unlockAudioOnce);
+  }
+  document.addEventListener("pointerdown", unlockAudioOnce, { passive: true });
+  document.addEventListener("touchstart", unlockAudioOnce, { passive: true });
+  document.addEventListener("keydown", unlockAudioOnce);
 
   $("#btn-reset-progress").addEventListener("click", () => {
     if (confirm("Xóa toàn bộ sao, streak và lịch sử luyện tập?")) {
