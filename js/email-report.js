@@ -546,21 +546,8 @@
             ? "Trung bình"
             : "Cần ôn thêm";
 
-    var strengthText = (analysis.strengths || [])
-      .map(function (s) {
-        return s.name + " (" + s.pct + "%)";
-      })
-      .join("; ");
-    if (!strengthText) strengthText = "Chưa nổi bật rõ";
-
-    var weakText = (analysis.weaknesses || [])
-      .map(function (s) {
-        return s.name + " (" + s.pct + "%)";
-      })
-      .join("; ");
-    if (!weakText) weakText = "Không có dạng yếu rõ";
-
-    var adviceText = (analysis.adviceList || []).slice(0, 5).join(" | ");
+    // Chỉ gửi 1 bản nội dung (message đã ghép sẵn) — không gửi thêm field lẻ
+    // để tránh email bị lặp 2 lần (field riêng + message tổng hợp).
     var message = buildMessage(payload);
 
     var subject =
@@ -580,24 +567,6 @@
     var fieldsBase = {
       subject: subject,
       from_name: "Toán Lớp 3 App",
-      name: payload.childName,
-      email: "quangtran@123corp.vn",
-      // Các field hiển thị rõ trên email Web3Forms
-      "Tên bé": payload.childName,
-      "Thử thách hôm nay": challenge.summary,
-      "Điểm số":
-        payload.correct +
-        "/" +
-        payload.total +
-        " câu đúng (" +
-        payload.pct +
-        "%) — " +
-        grade,
-      "Điểm mạnh": strengthText,
-      "Điểm yếu": weakText,
-      "Lời khuyên": adviceText,
-      Streak: payload.streak + " ngày liên tiếp",
-      "Tổng sao": String(payload.totalStars),
       message: message,
     };
 
