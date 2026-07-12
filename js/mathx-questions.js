@@ -43,6 +43,10 @@
       options: p.options || null,
       answer: String(p.answer),
       explain: p.explain || "",
+      /** Các bước giải dễ hiểu cho HS lớp 3 (hiển thị sau khi trả lời) */
+      explainSteps: p.explainSteps || null,
+      /** Mẹo ghi nhớ ngắn */
+      explainTip: p.explainTip || null,
       visual: p.visual || null,
       week: p.week || 0,
     };
@@ -307,30 +311,56 @@
       });
     }
     if (mode === "rel") {
-      // a + b = s, b = a + d → 2a + d = s
-      var a = rand(100, 300);
-      var d = rand(50, 200);
-      var b = a + d;
-      var s = a + b;
+      // Tổng − hạng1 = hạng2. Hạng2 − hạng1 = d → hạng1 = hạng2 − d
+      var hang2 = rand(200, 450);
+      var d = rand(40, Math.min(180, hang2 - 80));
+      var hang1 = hang2 - d;
+      var tong = hang1 + hang2;
       return q({
         topicId: "mathx-t1",
         level: level,
         week: 1,
         text:
           "Trong phép cộng hai số: tổng lớn hơn số hạng thứ nhất " +
-          b +
+          hang2 +
           " đơn vị; số hạng thứ nhất nhỏ hơn số hạng thứ hai " +
           d +
           " đơn vị. Số hạng thứ nhất là:",
         type: "input",
-        answer: a,
+        answer: hang1,
+        explainSteps: [
+          "“Tổng lớn hơn số hạng thứ nhất " +
+            hang2 +
+            "” nghĩa là: số hạng thứ hai = " +
+            hang2 +
+            " (vì tổng − số hạng 1 = số hạng 2).",
+          "“Số hạng thứ nhất nhỏ hơn số hạng thứ hai " +
+            d +
+            "” nghĩa là: số hạng 1 = số hạng 2 − " +
+            d +
+            ".",
+          "Tính: số hạng thứ nhất = " + hang2 + " − " + d + " = " + hang1 + ".",
+          "Kiểm tra: tổng = " +
+            hang1 +
+            " + " +
+            hang2 +
+            " = " +
+            tong +
+            " (lớn hơn số hạng 1 đúng " +
+            hang2 +
+            ").",
+        ],
+        explainTip:
+          "Trong phép cộng: Tổng − một số hạng = số hạng còn lại.",
         explain:
-          "Số hạng 2 − số hạng 1 = " +
+          "Số hạng 2 = " +
+          hang2 +
+          "; số hạng 1 = " +
+          hang2 +
+          " − " +
           d +
-          "; số hạng 2 = số hạng 1 + " +
-          b +
-          " (vì tổng − hạng 1 = hạng 2). Hạng 1 = " +
-          a +
+          " = " +
+          hang1 +
           ".",
       });
     }
@@ -351,6 +381,25 @@
           " (số lớn trừ số bé). Số lớn là:",
         type: "input",
         answer: x,
+        explainSteps: [
+          "Gọi số lớn là A, số bé là B.",
+          "A + B = " + sum + " (tổng), A − B = " + diff + " (hiệu).",
+          "Cộng hai vế: (A+B) + (A−B) = " +
+            sum +
+            " + " +
+            diff +
+            " → 2A = " +
+            (sum + diff) +
+            ".",
+          "Vậy A = " +
+            (sum + diff) +
+            " : 2 = " +
+            x +
+            " (số lớn). Số bé B = " +
+            y +
+            ".",
+        ],
+        explainTip: "Số lớn = (tổng + hiệu) : 2. Số bé = (tổng − hiệu) : 2.",
         explain: "Số lớn = (tổng + hiệu) : 2 = " + x,
       });
     }
@@ -480,6 +529,25 @@
         type: "mc",
         options: numMc(give * 2, 4),
         answer: give * 2,
+        explainSteps: [
+          "An cho Bình " +
+            give +
+            " nhãn → An giảm " +
+            give +
+            ", Bình tăng " +
+            give +
+            ".",
+          "Sau khi cho, hai bạn bằng nhau → phần An “đưa qua” đã san bằng khoảng cách.",
+          "Khoảng cách lúc đầu = phần An mất + phần Bình thêm = " +
+            give +
+            " + " +
+            give +
+            " = " +
+            give * 2 +
+            ".",
+          "Vậy lúc đầu An hơn Bình " + give * 2 + " nhãn.",
+        ],
+        explainTip: "An cho Bình k cái để bằng nhau → lúc đầu An hơn 2×k cái.",
         explain: "An hơn Bình 2 × " + give + " = " + give * 2 + " nhãn.",
       });
     }
@@ -487,7 +555,6 @@
       var half = rand(4, 15);
       var add = rand(20, 50);
       var result = half + add;
-      // x/2 + add = result → x/2 = result-add
       return q({
         topicId: "mathx-t2",
         level: level,
@@ -500,17 +567,27 @@
           ".",
         type: "input",
         answer: half * 2,
+        explainSteps: [
+          "Làm ngược từ kết quả " + result + ".",
+          "Trước khi cộng " +
+            add +
+            ", thương là: " +
+            result +
+            " − " +
+            add +
+            " = " +
+            half +
+            ".",
+          "Thương đó là số cần tìm chia cho 2 → số cần tìm = " +
+            half +
+            " × 2 = " +
+            half * 2 +
+            ".",
+          "Thử lại: " + half * 2 + " : 2 = " + half + "; " + half + " + " + add + " = " + result + ".",
+        ],
+        explainTip: "Bài “tìm số” thường làm ngược: trừ trước, rồi nhân/chia ngược.",
         explain:
-          "Thương = " +
-          result +
-          " − " +
-          add +
-          " = " +
-          half +
-          "; số cần tìm = " +
-          half +
-          " × 2 = " +
-          half * 2,
+          "Thương = " + result + " − " + add + " = " + half + "; số = " + half * 2,
       });
     }
     if (mode === "cmp") {
@@ -599,6 +676,12 @@
         type: "mc",
         options: numMc(g * 2, 5),
         answer: g * 2,
+        explainSteps: [
+          "An đưa sang Bình " + g + " nhãn.",
+          "An giảm " + g + " và Bình tăng " + g + " → khoảng cách giảm 2 × " + g + ".",
+          "Để hai bên bằng nhau, lúc đầu An phải hơn đúng 2 × " + g + " = " + g * 2 + ".",
+        ],
+        explainTip: "Cho k cái để bằng nhau → lúc đầu hơn 2k cái.",
         explain: "Hơn 2 × " + g + " = " + g * 2,
       });
     }
@@ -807,7 +890,6 @@
   function week3Advanced(level) {
     var mode = pick(["cut", "wood", "cycle", "share", "equal"]);
     if (mode === "cut") {
-      // n straight cuts max pieces of plane = n(n+1)/2 + 1
       var n = pick([3, 4, 5]);
       var maxP = (n * (n + 1)) / 2 + 1;
       return q({
@@ -821,6 +903,19 @@
         type: "mc",
         options: numMc(maxP, 4),
         answer: maxP,
+        explainSteps: [
+          "Muốn nhiều phần nhất: mỗi nhát cắt mới cắt hết tất cả các đường cũ.",
+          "Nhát 1 chia thành 2 phần.",
+          "Nhát thứ k thêm được nhiều nhất k phần mới.",
+          "Với " +
+            n +
+            " nhát: tổng phần = 1 + (1+2+…+" +
+            n +
+            ") = " +
+            maxP +
+            ".",
+        ],
+        explainTip: "n nhát cắt thẳng, nhiều nhất n(n+1)/2 + 1 phần.",
         explain: "Công thức: n(n+1)/2 + 1 = " + maxP,
       });
     }
@@ -840,6 +935,12 @@
           " phút. Thời gian là:",
         type: "input",
         answer: cuts * minPer,
+        explainSteps: [
+          "Cắt thành " + parts + " phần thì cần " + cuts + " nhát cắt (ít hơn số phần 1 nhát).",
+          "Mỗi nhát hết " + minPer + " phút.",
+          "Tổng thời gian = " + cuts + " × " + minPer + " = " + cuts * minPer + " phút.",
+        ],
+        explainTip: "n phần thẳng hàng → chỉ cần (n − 1) nhát cắt.",
         explain: "Cần " + cuts + " nhát × " + minPer + " = " + cuts * minPer + " phút",
       });
     }
@@ -1096,7 +1197,13 @@
           " cây xanh. Tất cả bao nhiêu cây xanh?",
         type: "input",
         answer: gaps * trees,
-        explain: (poles - 1) + " khoảng × " + trees + " = " + gaps * trees,
+        explainSteps: [
+          "Vẽ nhanh: cột — cây — cột — cây — … — cột.",
+          "Số khoảng giữa " + poles + " cột = " + poles + " − 1 = " + gaps + ".",
+          "Mỗi khoảng " + trees + " cây → tổng cây = " + gaps + " × " + trees + " = " + gaps * trees + ".",
+        ],
+        explainTip: "n cột thẳng hàng → (n − 1) khoảng.",
+        explain: gaps + " khoảng × " + trees + " = " + gaps * trees,
       });
     }
     if (mode === "minProd") {
@@ -1285,7 +1392,6 @@
       });
     }
     if (mode === "factor") {
-      // A*B=63, B*C=35 → B=7, A=9, C=5
       return q({
         topicId: "mathx-t5",
         level: level,
@@ -1294,13 +1400,21 @@
         type: "mc",
         options: numMc(315, 50),
         answer: 315,
-        explain: "B=7, A=9, C=5 → tích 9×7×5=315",
+        explainSteps: [
+          "Tìm B chung: B vừa là ước của 63 vừa là ước của 35, và B > 1.",
+          "Ước chung lớn hơn 1 của 63 và 35 là 7 → B = 7.",
+          "A × 7 = 63 → A = 9.  7 × C = 35 → C = 5.",
+          "A × B × C = 9 × 7 × 5 = 315.",
+        ],
+        explainTip: "Gặp hai tích chung một chữ: tìm số ở giữa (B) trước.",
+        explain: "B=7, A=9, C=5 → 9×7×5=315",
       });
     }
     if (mode === "age2") {
       var c = rand(7, 10);
       var k = pick([3, 4, 5]);
-      // difference stays same after years
+      var mom = c * k;
+      var diff = mom - c;
       return q({
         topicId: "mathx-t5",
         level: level,
@@ -1312,8 +1426,15 @@
           k +
           " lần tuổi con. Sau 10 năm, mẹ hơn con bao nhiêu tuổi?",
         type: "input",
-        answer: c * k - c,
-        explain: "Hiệu tuổi không đổi: " + c * k + " − " + c + " = " + (c * k - c),
+        answer: diff,
+        explainSteps: [
+          "Năm nay: tuổi mẹ = " + c + " × " + k + " = " + mom + ".",
+          "Mẹ hơn con năm nay: " + mom + " − " + c + " = " + diff + " tuổi.",
+          "Sau 10 năm, cả hai cùng thêm 10 tuổi → khoảng cách tuổi không đổi.",
+          "Vậy sau 10 năm mẹ vẫn hơn con " + diff + " tuổi.",
+        ],
+        explainTip: "Hai người cùng lớn thêm số năm bằng nhau → hiệu tuổi giữ nguyên.",
+        explain: "Hiệu tuổi không đổi: " + mom + " − " + c + " = " + diff,
       });
     }
     if (mode === "multiBuy") {

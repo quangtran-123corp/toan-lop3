@@ -311,13 +311,72 @@ function checkAnswer(userRaw) {
   }
 }
 
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Hiển thị lời giải dễ hiểu cho học sinh lớp 3 */
 function showFeedback(ok, item) {
   const fb = $("#feedback");
   fb.hidden = false;
   fb.className = `feedback ${ok ? "ok" : "bad"}`;
-  fb.innerHTML = ok
-    ? `<strong>Đúng rồi!</strong> ${item.explain || ""}`
-    : `<strong>Đáp án đúng: ${item.answer}</strong><br/>${item.explain || ""}`;
+
+  const head = ok
+    ? `<div class="fb-head"><strong>Đúng rồi! 🌟</strong></div>`
+    : `<div class="fb-head"><strong>Chưa đúng.</strong> Đáp án đúng: <em>${escapeHtml(
+        item.answer
+      )}</em></div>`;
+
+  let solve = "";
+  const steps = item.explainSteps;
+  if (steps && steps.length) {
+    solve =
+      `<div class="solve-box">` +
+      `<p class="solve-title">📝 Cách giải (dễ nhớ cho lớp 3)</p>` +
+      `<ol class="solve-steps">` +
+      steps
+        .map(function (s) {
+          return `<li>${escapeHtml(s)}</li>`;
+        })
+        .join("") +
+      `</ol>` +
+      (item.explainTip
+        ? `<p class="solve-tip">💡 <strong>Ghi nhớ:</strong> ${escapeHtml(
+            item.explainTip
+          )}</p>`
+        : "") +
+      `</div>`;
+  } else if (item.explain) {
+    // Hỗ trợ giải thích nhiều dòng (xuống dòng = bước)
+    const lines = String(item.explain)
+      .split(/\n+/)
+      .map(function (l) {
+        return l.trim();
+      })
+      .filter(Boolean);
+    if (lines.length > 1) {
+      solve =
+        `<div class="solve-box">` +
+        `<p class="solve-title">📝 Cách giải</p>` +
+        `<ol class="solve-steps">` +
+        lines
+          .map(function (l) {
+            return `<li>${escapeHtml(l.replace(/^Bước\s*\d+\s*[:.\-]?\s*/i, ""))}</li>`;
+          })
+          .join("") +
+        `</ol></div>`;
+    } else {
+      solve = `<div class="solve-box"><p class="solve-plain">${escapeHtml(
+        item.explain
+      )}</p></div>`;
+    }
+  }
+
+  fb.innerHTML = head + solve;
 }
 
 function nextQuestion() {

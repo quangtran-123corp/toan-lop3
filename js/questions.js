@@ -79,6 +79,8 @@ function q(partial) {
     options: partial.options || null,
     answer: String(partial.answer),
     explain: partial.explain || "",
+    explainSteps: partial.explainSteps || null,
+    explainTip: partial.explainTip || null,
   };
 }
 
