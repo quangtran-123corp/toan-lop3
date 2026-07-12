@@ -1,6 +1,5 @@
 /**
- * Chuong trinh Toan Lop 3 — Ket noi tri thuc voi cuoc song
- * Cac chu de luyen tap bam SGK (HK1 + HK2)
+ * Toán Lớp 3 — KNTT + MathX (toàn năm)
  */
 const TOPICS = [
   {
@@ -69,59 +68,75 @@ const TOPICS = [
   {
     id: "hon-hop",
     emoji: "🎲",
-    name: "Hỗn hợp",
-    desc: "Ôn nhiều chủ đề trong 1 lần",
+    name: "Hỗn hợp (chung)",
+    desc: "Ôn nhiều chủ đề KNTT",
     color: "#64748B",
   },
-  // MathX — bám KNTT, dạng đề tương đương (Cơ bản / Nâng cao theo tuần)
+  // —— MathX toàn năm (bám PDF tuần 1–34) ——
   {
-    id: "mathx-t1",
+    id: "mathx-g1",
     emoji: "📗",
-    name: "MathX · Tuần 1",
-    desc: "Số 3 chữ số · Cộng trừ · Đọc viết",
+    name: "MathX · T1–8",
+    desc: "Số 1000 · Bảng nhân 2–9 · Chia có dư",
     color: "#0D9488",
   },
   {
-    id: "mathx-t2",
+    id: "mathx-g2",
     emoji: "📘",
-    name: "MathX · Tuần 2",
-    desc: "Trừ · Nhân chia · Toán lời",
+    name: "MathX · T9–14",
+    desc: "Hình học · Gấp/giảm lần",
     color: "#0891B2",
   },
   {
-    id: "mathx-t3",
+    id: "mathx-g3",
     emoji: "📙",
-    name: "MathX · Tuần 3",
-    desc: "Bảng nhân chia 3–4 · Đoạn thẳng",
+    name: "MathX · T15–18",
+    desc: "Đo lường · Góc · Trung điểm",
     color: "#7C3AED",
   },
   {
-    id: "mathx-t4",
+    id: "mathx-g4",
     emoji: "📕",
-    name: "MathX · Tuần 4",
-    desc: "Bảng 6 · Thời gian · Hình",
+    name: "MathX · T19–27",
+    desc: "Số lớn · Nhân nhiều chữ số",
     color: "#DB2777",
   },
   {
-    id: "mathx-t5",
+    id: "mathx-g5",
     emoji: "📓",
-    name: "MathX · Tuần 5",
-    desc: "Bảng 7–8 · Gấp lần · Nhiều bước",
+    name: "MathX · T28–34",
+    desc: "Tiền Việt · Ôn tập 100 000",
     color: "#EA580C",
+  },
+  {
+    id: "mathx-hk1",
+    emoji: "📅",
+    name: "MathX · Học kỳ 1",
+    desc: "Tuần 1–18 · CB / NC",
+    color: "#2563EB",
+  },
+  {
+    id: "mathx-hk2",
+    emoji: "📅",
+    name: "MathX · Học kỳ 2",
+    desc: "Tuần 19–34 · CB / NC",
+    color: "#C026D3",
   },
   {
     id: "mathx-hon-hop",
     emoji: "🎯",
-    name: "MathX · Hỗn hợp",
-    desc: "Ôn MathX tuần 1–5 (CB / NC)",
+    name: "MathX · Cả năm",
+    desc: "Trộn tuần 1–34 (CB / NC)",
     color: "#4F46E5",
   },
 ];
 
 function getTopic(id) {
-  return TOPICS.find(function (t) {
-    return t.id === id;
-  }) || TOPICS[TOPICS.length - 1];
+  return (
+    TOPICS.find(function (t) {
+      return t.id === id;
+    }) || TOPICS[TOPICS.length - 1]
+  );
 }
 
 window.TOPICS = TOPICS;
