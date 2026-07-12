@@ -10,6 +10,9 @@
  */
 (function (global) {
   var DEFAULT_EMAILS = ["quangtran@123corp.vn", "ngocdang@123corp.vn"];
+  /** Access Key mặc định (Web3Forms) */
+  var DEFAULT_KEY_DAD = "0bd0a7dc-bfc6-4b65-b80e-00d7cbbde648";
+  var DEFAULT_KEY_MOM = "b48e2593-fd09-4709-9234-bfb951ea3f43";
   var WEB3FORMS_URL = "https://api.web3forms.com/submit";
   var pending = false;
 
@@ -80,12 +83,12 @@
    */
   function getWeb3Targets(state) {
     var targets = [];
-    var dadKey = (state && state.web3formsKeyDad) || "";
-    var momKey = (state && state.web3formsKeyMom) || "";
+    var dadKey = (state && state.web3formsKeyDad) || DEFAULT_KEY_DAD;
+    var momKey = (state && state.web3formsKeyMom) || DEFAULT_KEY_MOM;
     var sharedKey = (state && state.web3formsAccessKey) || "";
 
-    dadKey = String(dadKey).trim();
-    momKey = String(momKey).trim();
+    dadKey = String(dadKey).trim() || DEFAULT_KEY_DAD;
+    momKey = String(momKey).trim() || DEFAULT_KEY_MOM;
     sharedKey = String(sharedKey).trim();
 
     if (dadKey) {

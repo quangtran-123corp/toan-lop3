@@ -9,9 +9,10 @@ function defaultState() {
     parentEmails: "quangtran@123corp.vn, ngocdang@123corp.vn",
     emailNotify: true,
     emailEverySession: true,
-    // Access Key free từ https://web3forms.com (mỗi email nhận = 1 key)
-    web3formsKeyDad: "",
-    web3formsKeyMom: "",
+    // Access Key Web3Forms (public, dùng phía client)
+    // quangtran@123corp.vn / ngocdang@123corp.vn
+    web3formsKeyDad: "0bd0a7dc-bfc6-4b65-b80e-00d7cbbde648",
+    web3formsKeyMom: "b48e2593-fd09-4709-9234-bfb951ea3f43",
     web3formsAccessKey: "",
     stars: 0,
     streak: 0,

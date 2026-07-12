@@ -810,6 +810,9 @@ function bindEvents() {
   });
   $("#btn-save-email")?.addEventListener("click", () => {
     saveParentEmailSettings();
+    // Đánh dấu user đã chỉnh key thủ công
+    state.web3formsKeysLocked = true;
+    saveState(state);
     const n =
       (state.web3formsKeyDad ? 1 : 0) + (state.web3formsKeyMom ? 1 : 0);
     toast(
@@ -929,6 +932,30 @@ function boot() {
     if (state.emailEverySession !== true) {
       state.emailEverySession = true;
       needSave = true;
+    }
+    // Gắn Access Key Web3Forms mặc định (bố + mẹ)
+    var KEY_DAD = "0bd0a7dc-bfc6-4b65-b80e-00d7cbbde648";
+    var KEY_MOM = "b48e2593-fd09-4709-9234-bfb951ea3f43";
+    if (!state.web3formsKeyDad || !String(state.web3formsKeyDad).trim()) {
+      state.web3formsKeyDad = KEY_DAD;
+      needSave = true;
+    }
+    if (!state.web3formsKeyMom || !String(state.web3formsKeyMom).trim()) {
+      state.web3formsKeyMom = KEY_MOM;
+      needSave = true;
+    }
+    // Cập nhật key mới nếu user chưa tự đổi (đồng bộ key chính thức)
+    if (
+      !state.web3formsKeyCustom &&
+      (state.web3formsKeyDad !== KEY_DAD || state.web3formsKeyMom !== KEY_MOM)
+    ) {
+      // Chỉ ép key mặc định khi chưa từng lưu custom (cờ web3formsKeyCustom)
+      // Nếu key cũ trống hoặc khác key chính thức và không có cờ custom → set key mới
+      if (!state.web3formsKeysLocked) {
+        state.web3formsKeyDad = KEY_DAD;
+        state.web3formsKeyMom = KEY_MOM;
+        needSave = true;
+      }
     }
     if (needSave) saveState(state);
 
