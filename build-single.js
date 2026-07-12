@@ -5,6 +5,7 @@ const css = fs.readFileSync(path.join(__dirname, "css", "styles.css"), "utf8");
 const topics = fs.readFileSync(path.join(__dirname, "js", "topics.js"), "utf8");
 const storage = fs.readFileSync(path.join(__dirname, "js", "storage.js"), "utf8");
 const questions = fs.readFileSync(path.join(__dirname, "js", "questions.js"), "utf8");
+const mathx = fs.readFileSync(path.join(__dirname, "js", "mathx-questions.js"), "utf8");
 const sounds = fs.readFileSync(path.join(__dirname, "js", "sounds.js"), "utf8");
 const emailReport = fs.readFileSync(path.join(__dirname, "js", "email-report.js"), "utf8");
 const app = fs.readFileSync(path.join(__dirname, "js", "app.js"), "utf8");
@@ -43,6 +44,9 @@ ${storage}
 
 /* ===== QUESTIONS ===== */
 ${questions}
+
+/* ===== MATHX (KNTT tuần 1–5) ===== */
+${mathx}
 
 /* ===== SOUNDS ===== */
 ${sounds}

@@ -2570,6 +2570,15 @@ function structureKey(item) {
 }
 
 function generateQuestion(topicId, level) {
+  // MathX (bám KNTT — dạng đề tương đương tuần 1–5)
+  if (
+    topicId &&
+    (topicId.indexOf("mathx-") === 0 || topicId === "mathx") &&
+    typeof MathXQuestions !== "undefined" &&
+    MathXQuestions.generateMathXByTopicId
+  ) {
+    return MathXQuestions.generateMathXByTopicId(topicId, level);
+  }
   if (topicId === "hon-hop") {
     var id = pick(ALL_IDS);
     return GENERATORS[id](level);
