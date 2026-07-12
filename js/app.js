@@ -113,8 +113,24 @@ function renderHome() {
         "</h3></div>"
       );
     }
+    var contentHtml = "";
+    if (t.content && t.content.length) {
+      contentHtml =
+        '<ul class="topic-content">' +
+        t.content
+          .map(function (line) {
+            return "<li>" + line + "</li>";
+          })
+          .join("") +
+        "</ul>";
+    }
+    var dateHtml = t.dates
+      ? '<span class="topic-dates">' + t.dates + "</span>"
+      : "";
     return (
-      '<button type="button" class="topic-card" data-topic="' +
+      '<button type="button" class="topic-card' +
+      (t.mathxWeek || t.mathxExam ? " topic-card-mathx" : "") +
+      '" data-topic="' +
       t.id +
       '" style="--accent:' +
       t.color +
@@ -125,9 +141,11 @@ function renderHome() {
       '<span class="topic-name">' +
       t.name +
       "</span>" +
-      '<span class="topic-desc">' +
-      t.desc +
-      "</span>" +
+      dateHtml +
+      contentHtml +
+      (contentHtml
+        ? ""
+        : '<span class="topic-desc">' + (t.desc || "") + "</span>") +
       "</button>"
     );
   }).join("");

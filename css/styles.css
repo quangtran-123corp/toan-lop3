@@ -410,6 +410,44 @@ body {
   min-height: 110px;
 }
 
+.topic-card-mathx {
+  min-height: 132px;
+  grid-column: 1 / -1;
+}
+
+.topic-dates {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #6366F1;
+  margin-top: 2px;
+}
+
+.topic-content {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.topic-content li {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--muted);
+  line-height: 1.35;
+  padding-left: 14px;
+  position: relative;
+}
+
+.topic-content li::before {
+  content: "•";
+  position: absolute;
+  left: 2px;
+  color: var(--accent, var(--primary));
+  font-weight: 900;
+}
+
 .topic-card:hover {
   border-color: var(--accent, var(--primary));
   transform: translateY(-2px);

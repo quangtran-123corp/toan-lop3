@@ -1311,7 +1311,7 @@
   /** Chọn generator theo tuần */
   function generateMathXQuestion(week, level) {
     week = Number(week) || 0;
-    if (week < 1 || week > 34) week = rand(1, 34);
+    if (week < 1 || week > 35) week = rand(1, 35);
     var isAdv = level === "advanced";
     var item;
 
@@ -1322,8 +1322,12 @@
     else if (week <= 18) item = isAdv ? genE_adv(week, level) : genE_basic(week, level);
     else if (week <= 23) item = isAdv ? genF_adv(week, level) : genF_basic(week, level);
     else if (week <= 27) item = isAdv ? genF_adv(week, level) : genG_basic(week, level);
-    else if (week <= 31) item = isAdv ? genH_adv(week, level) : genH_basic(week, level);
-    else item = isAdv ? genI_adv(week, level) : genI_basic(week, level);
+    else if (week <= 30) item = isAdv ? genH_adv(week, level) : genH_basic(week, level);
+    else if (week <= 32) item = isAdv ? genI_adv(week, level) : genI_basic(week, level);
+    else if (week === 33)
+      item = isAdv ? genE_adv(week, level) : genE_basic(week, level); // số liệu / ôn hình đo
+    else if (week === 34) item = isAdv ? genI_adv(week, level) : genI_basic(week, level);
+    else item = isAdv ? genC_adv(week, level) : genC_basic(week, level); // T35 ôn hình + số liệu
 
     item.week = week;
     item.level = level;
@@ -1349,13 +1353,14 @@
    *   gk1 ≈ T1–9 | ck1 ≈ T1–18 | gk2 ≈ T19–27 | ck2 ≈ T19–34
    */
   var EXAM_WEEKS = {
+    // Đúng vị trí dàn ý MathX
     "mathx-gk1": [1, 2, 3, 4, 5, 6, 7, 8, 9],
     "mathx-ck1": [
       1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
     ],
     "mathx-gk2": [19, 20, 21, 22, 23, 24, 25, 26, 27],
     "mathx-ck2": [
-      19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+      19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
     ],
   };
 
@@ -1363,7 +1368,7 @@
     var m = /^mathx-t(\d+)$/.exec(topicId || "");
     if (m) {
       var w = parseInt(m[1], 10);
-      if (w >= 1 && w <= 34) return w;
+      if (w >= 1 && w <= 35) return w;
     }
     return 0;
   }
@@ -1394,7 +1399,7 @@
   global.MathXQuestions = {
     generateMathXQuestion: generateMathXQuestion,
     generateMathXByTopicId: generateMathXByTopicId,
-    MAX_WEEK: 34,
+    MAX_WEEK: 35,
     EXAM_WEEKS: EXAM_WEEKS,
   };
 })(typeof window !== "undefined" ? window : globalThis);
