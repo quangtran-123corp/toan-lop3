@@ -380,6 +380,20 @@ body {
   margin-bottom: 16px;
 }
 
+.topic-section {
+  margin: 8px 0 2px;
+  padding-top: 6px;
+}
+
+.topic-section-title {
+  font-size: 0.92rem;
+  font-weight: 900;
+  color: #312E81;
+  letter-spacing: -0.01em;
+  padding: 8px 4px 4px;
+  border-bottom: 2px solid #C7D2FE;
+}
+
 .topic-card {
   background: var(--card);
   border: 2px solid transparent;

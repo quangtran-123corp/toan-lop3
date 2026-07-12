@@ -1342,38 +1342,59 @@
     return item;
   }
 
-  var TOPIC_WEEKS = {
-    "mathx-t1": [1],
-    "mathx-t2": [2],
-    "mathx-t3": [3],
-    "mathx-t4": [4],
-    "mathx-t5": [5],
-    "mathx-g1": [1, 2, 3, 4, 5, 6, 7, 8],
-    "mathx-g2": [9, 10, 11, 12, 13, 14],
-    "mathx-g3": [15, 16, 17, 18],
-    "mathx-g4": [19, 20, 21, 22, 23, 24, 25, 26, 27],
-    "mathx-g5": [28, 29, 30, 31, 32, 33, 34],
-    "mathx-hk1": null, // 1-18
-    "mathx-hk2": null, // 19-34
-    "mathx-hon-hop": null, // 1-34
+  /**
+   * Phạm vi tuần theo từng mục MathX
+   * - mathx-t1 … mathx-t34: đúng 1 tuần
+   * - 4 kỳ thi (tách riêng, không gộp):
+   *   gk1 ≈ T1–9 | ck1 ≈ T1–18 | gk2 ≈ T19–27 | ck2 ≈ T19–34
+   */
+  var EXAM_WEEKS = {
+    "mathx-gk1": [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "mathx-ck1": [
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+    ],
+    "mathx-gk2": [19, 20, 21, 22, 23, 24, 25, 26, 27],
+    "mathx-ck2": [
+      19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34,
+    ],
   };
 
+  function weekFromTopicId(topicId) {
+    var m = /^mathx-t(\d+)$/.exec(topicId || "");
+    if (m) {
+      var w = parseInt(m[1], 10);
+      if (w >= 1 && w <= 34) return w;
+    }
+    return 0;
+  }
+
   function generateMathXByTopicId(topicId, level) {
-    var weeks = TOPIC_WEEKS[topicId];
-    var w;
-    if (topicId === "mathx-hk1") w = rand(1, 18);
-    else if (topicId === "mathx-hk2") w = rand(19, 34);
-    else if (topicId === "mathx-hon-hop" || !weeks) w = rand(1, 34);
-    else if (weeks.length === 1) w = weeks[0];
-    else w = pick(weeks);
-    var item = generateMathXQuestion(w, level);
-    item.topicId = topicId;
-    return item;
+    var w = weekFromTopicId(topicId);
+    if (w) {
+      var item = generateMathXQuestion(w, level);
+      item.topicId = topicId;
+      return item;
+    }
+    // 4 kỳ thi — trộn trong phạm vi tuần của kỳ (không gộp 4 kỳ lại)
+    var examWeeks = EXAM_WEEKS[topicId];
+    if (examWeeks && examWeeks.length) {
+      var ew = pick(examWeeks);
+      var qe = generateMathXQuestion(ew, level);
+      qe.topicId = topicId;
+      qe.exam = topicId;
+      // Ưu tiên bài có lời giải từng bước trong đề kiểm tra (nâng cao hơn chút khi NC)
+      return qe;
+    }
+    // fallback
+    var fb = generateMathXQuestion(rand(1, 34), level);
+    fb.topicId = topicId || "mathx-t1";
+    return fb;
   }
 
   global.MathXQuestions = {
     generateMathXQuestion: generateMathXQuestion,
     generateMathXByTopicId: generateMathXByTopicId,
     MAX_WEEK: 34,
+    EXAM_WEEKS: EXAM_WEEKS,
   };
 })(typeof window !== "undefined" ? window : globalThis);

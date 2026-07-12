@@ -104,14 +104,33 @@ function renderHome() {
   $("#daily-title").textContent = "10 câu · Hỗn hợp (Cơ bản + Nâng cao)";
 
   const grid = $("#topic-grid");
-  grid.innerHTML = TOPICS.map(
-    (t) => `
-    <button type="button" class="topic-card" data-topic="${t.id}" style="--accent:${t.color}">
-      <span class="topic-emoji">${t.emoji}</span>
-      <span class="topic-name">${t.name}</span>
-      <span class="topic-desc">${t.desc}</span>
-    </button>`
-  ).join("");
+  grid.innerHTML = TOPICS.map(function (t) {
+    if (t.section) {
+      return (
+        '<div class="topic-section" style="grid-column:1/-1">' +
+        '<h3 class="topic-section-title">' +
+        t.section +
+        "</h3></div>"
+      );
+    }
+    return (
+      '<button type="button" class="topic-card" data-topic="' +
+      t.id +
+      '" style="--accent:' +
+      t.color +
+      '">' +
+      '<span class="topic-emoji">' +
+      t.emoji +
+      "</span>" +
+      '<span class="topic-name">' +
+      t.name +
+      "</span>" +
+      '<span class="topic-desc">' +
+      t.desc +
+      "</span>" +
+      "</button>"
+    );
+  }).join("");
 
   grid.querySelectorAll(".topic-card").forEach((btn) => {
     btn.addEventListener("click", () => openDiff(btn.dataset.topic));
@@ -525,17 +544,24 @@ function renderProgress() {
   `;
 
   const list = $("#topic-progress-list");
-  list.innerHTML = TOPICS.map((t) => {
-    const p = s.byTopic[t.id];
-    if (!p || !p.total) {
-      return `<div class="tp-row">
+  const practiceTopics =
+    typeof getPracticeTopics === "function"
+      ? getPracticeTopics()
+      : TOPICS.filter(function (t) {
+          return t.id && !t.section;
+        });
+  list.innerHTML = practiceTopics
+    .map((t) => {
+      const p = s.byTopic[t.id];
+      if (!p || !p.total) {
+        return `<div class="tp-row">
         <span class="tp-emoji">${t.emoji}</span>
         <div class="tp-info"><strong>${t.name}</strong><span>Chưa luyện</span></div>
         <div class="tp-bar"><div class="fill" style="width:0%"></div></div>
       </div>`;
-    }
-    const pct = Math.round((p.correct / p.total) * 100);
-    return `<div class="tp-row">
+      }
+      const pct = Math.round((p.correct / p.total) * 100);
+      return `<div class="tp-row">
       <span class="tp-emoji">${t.emoji}</span>
       <div class="tp-info">
         <strong>${t.name}</strong>
@@ -543,7 +569,8 @@ function renderProgress() {
       </div>
       <div class="tp-bar"><div class="fill" style="width:${pct}%;background:${t.color}"></div></div>
     </div>`;
-  }).join("");
+    })
+    .join("");
 }
 
 // ——— Settings ———
