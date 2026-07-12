@@ -1308,33 +1308,1082 @@
     ])();
   }
 
-  /** Chọn generator theo tuần */
+  // ========== SKILL GENERATORS — khớp đúng chủ đề tuần KNTT ==========
+
+  /** Bảng nhân/chia chỉ trong các bảng cho trước, vd [2,5] hoặc [6] */
+  function genBangNhanChia(week, level, tables) {
+    tables = tables || [2, 3, 4, 5, 6, 7, 8, 9];
+    var n = pick(tables);
+    var m = rand(2, 9);
+    if (level === "advanced" && Math.random() < 0.45) {
+      // tìm thành phần
+      if (Math.random() < 0.5) {
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "☐ × " + n + " = " + n * m + ". Số trong ô trống là?",
+          type: "input",
+          answer: m,
+          explainSteps: [
+            "Đây là tìm thừa số còn thiếu trong phép nhân.",
+            "Số cần tìm = tích : thừa số đã biết = " + n * m + " : " + n + " = " + m + ".",
+          ],
+          explainTip: "Tìm thừa số: lấy tích chia cho thừa số kia.",
+        });
+      }
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: n * m + " : ☐ = " + m + ". Số chia (số chia) là?",
+        type: "input",
+        answer: n,
+        explainSteps: [
+          "Thương × số chia = số bị chia.",
+          "Số chia = " + n * m + " : " + m + " = " + n + ".",
+        ],
+      });
+    }
+    if (Math.random() < 0.5) {
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: n + " × " + m + " = ?",
+        type: "mc",
+        options: numMc(n * m, 10),
+        answer: n * m,
+        explain: n + " × " + m + " = " + n * m,
+      });
+    }
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: n * m + " : " + n + " = ?",
+      type: "mc",
+      options: numMc(m, 5),
+      answer: m,
+      explain: n * m + " : " + n + " = " + m,
+    });
+  }
+
+  function genSoDen1000(week, level) {
+    var h = rand(1, 9);
+    var t = rand(0, 9);
+    var o = rand(0, 9);
+    var n = h * 100 + t * 10 + o;
+    if (Math.random() < 0.4) {
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Số gồm " + h + " trăm " + t + " chục " + o + " đơn vị là:",
+        type: "mc",
+        options: numMc(n, 40),
+        answer: n,
+        explain: h + "×100 + " + t + "×10 + " + o + " = " + n,
+      });
+    }
+    if (Math.random() < 0.5) {
+      var a = n;
+      var b = n + rand(10, 80) * (Math.random() < 0.5 ? 1 : -1);
+      if (b < 100) b = n + 15;
+      if (b > 999) b = n - 15;
+      var ans = a > b ? ">" : a < b ? "<" : "=";
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "So sánh: " + a + "  ___  " + b,
+        type: "mc",
+        options: [">", "<", "="],
+        answer: ans,
+        explain: a + " " + ans + " " + b,
+      });
+    }
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Số liền sau của " + n + " là:",
+      type: "mc",
+      options: numMc(n + 1, 5),
+      answer: n + 1,
+      explain: n + " + 1 = " + (n + 1),
+    });
+  }
+
+  function genCongTru1000(week, level) {
+    if (level === "advanced" && Math.random() < 0.4) {
+      var a = rand(200, 600);
+      var b = rand(100, 300);
+      var sum = a + b;
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: a + " + ☐ = " + sum + ". Số hạng còn thiếu là?",
+        type: "input",
+        answer: b,
+        explainSteps: [
+          "Muốn tìm số hạng còn thiếu: lấy tổng trừ số hạng đã biết.",
+          sum + " − " + a + " = " + b + ".",
+        ],
+        explainTip: "Tổng − số hạng này = số hạng kia.",
+      });
+    }
+    if (Math.random() < 0.5) {
+      var x = rand(200, 550);
+      var y = rand(100, 400);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: x + " + " + y + " = ?",
+        type: "mc",
+        options: numMc(x + y, 30),
+        answer: x + y,
+        explain: x + " + " + y + " = " + (x + y),
+      });
+    }
+    var p = rand(400, 900);
+    var qv = rand(100, 350);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: p + " − " + qv + " = ?",
+      type: "mc",
+      options: numMc(p - qv, 30),
+      answer: p - qv,
+      explain: p + " − " + qv + " = " + (p - qv),
+    });
+  }
+
+  function genThanhPhanCongTru(week, level) {
+    if (Math.random() < 0.5) {
+      var a = rand(100, 500);
+      var b = rand(50, 300);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Số bị trừ " + (a + b) + ", hiệu " + a + ". Số trừ là?",
+        type: "input",
+        answer: b,
+        explainSteps: [
+          "Số trừ = số bị trừ − hiệu.",
+          a + b + " − " + a + " = " + b + ".",
+        ],
+        explainTip: "Số bị trừ − hiệu = số trừ.",
+      });
+    }
+    var s1 = rand(100, 400);
+    var s2 = rand(100, 400);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Tổng " + (s1 + s2) + ", số hạng thứ nhất " + s1 + ". Số hạng thứ hai là?",
+      type: "input",
+      answer: s2,
+      explainSteps: [
+        "Số hạng còn lại = tổng − số hạng đã biết.",
+        s1 + s2 + " − " + s1 + " = " + s2 + ".",
+      ],
+    });
+  }
+
+  function genMotPhanMay(week, level) {
+    var d = pick([2, 3, 4, 5, 6, 8]);
+    var unit = rand(2, 8);
+    var total = d * unit;
+    if (level === "advanced" && Math.random() < 0.5) {
+      var n = rand(2, d - 1);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: n + "/" + d + " của " + total + " bằng bao nhiêu?",
+        type: "input",
+        answer: unit * n,
+        explainSteps: [
+          "Một phần " + d + " của " + total + " = " + total + " : " + d + " = " + unit + ".",
+          n + " phần = " + unit + " × " + n + " = " + unit * n + ".",
+        ],
+        explainTip: "k/n của S = (S : n) × k.",
+      });
+    }
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Một phần " + d + " của " + total + " là bao nhiêu?",
+      type: "mc",
+      options: numMc(unit, 4),
+      answer: unit,
+      explainSteps: [
+        "Chia đều " + total + " thành " + d + " phần bằng nhau.",
+        total + " : " + d + " = " + unit + ".",
+      ],
+      explainTip: "Một phần mấy = chia cho mấy.",
+    });
+  }
+
+  function genTrungDiem(week, level) {
+    if (level === "advanced" && Math.random() < 0.5) {
+      var ab = pick([40, 60, 80, 100, 120]);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text:
+          "PQ = " +
+          ab +
+          " cm. M trung điểm PQ, N trung điểm MQ. Độ dài MN là:",
+        type: "mc",
+        options: numMc(ab / 4, 8),
+        answer: ab / 4,
+        explainSteps: [
+          "M giữa P và Q → MQ = " + ab + " : 2 = " + ab / 2 + " cm.",
+          "N giữa M và Q → MN = MQ : 2 = " + ab / 4 + " cm.",
+        ],
+        explainTip: "Trung điểm chia đoạn thành 2 phần bằng nhau.",
+      });
+    }
+    var len = pick([8, 10, 12, 16, 20, 24, 30]);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text:
+        "Đoạn thẳng AB dài " +
+        len +
+        " cm. M là trung điểm. Độ dài AM là:",
+      type: "mc",
+      options: numMc(len / 2, 5),
+      answer: len / 2,
+      explainSteps: [
+        "Trung điểm chia đoạn thẳng thành 2 phần bằng nhau.",
+        "AM = AB : 2 = " + len + " : 2 = " + len / 2 + " cm.",
+      ],
+    });
+  }
+
+  function genHinhTron(week, level) {
+    if (Math.random() < 0.5) {
+      var r = rand(3, 15);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Hình tròn bán kính " + r + " cm. Đường kính bằng:",
+        type: "mc",
+        options: numMc(r * 2, 6),
+        answer: r * 2,
+        explainSteps: [
+          "Đường kính = 2 × bán kính.",
+          "2 × " + r + " = " + r * 2 + " cm.",
+        ],
+        explainTip: "d = 2r · r = d : 2.",
+      });
+    }
+    var d = pick([6, 8, 10, 12, 14, 16, 20]);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Hình tròn đường kính " + d + " cm. Bán kính bằng:",
+      type: "mc",
+      options: numMc(d / 2, 4),
+      answer: d / 2,
+      explain: "Bán kính = đường kính : 2 = " + d / 2 + " cm.",
+    });
+  }
+
+  function genGoc(week, level) {
+    if (level === "advanced" && Math.random() < 0.5) {
+      var deg = pick([30, 45, 60, 90, 120, 150]);
+      var cmp = deg > 90 ? "lớn hơn" : deg < 90 ? "bé hơn" : "bằng";
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Góc " + deg + "° so với góc vuông thì thế nào?",
+        type: "mc",
+        options: ["lớn hơn", "bé hơn", "bằng", "không so sánh được"],
+        answer: cmp,
+        explain: deg + "° " + cmp + " 90° (góc vuông).",
+      });
+    }
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Góc vuông có số đo bằng bao nhiêu độ?",
+      type: "mc",
+      options: ["45", "60", "90", "180"],
+      answer: "90",
+      explainSteps: ["Góc vuông có số đo 90°.", "Dấu góc vuông là hình vuông nhỏ ở đỉnh góc."],
+    });
+  }
+
+  function genHinhPhangKhoi(week, level) {
+    return pick([
+      function () {
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Hình tam giác có bao nhiêu cạnh và đỉnh?",
+          type: "mc",
+          options: ["3 cạnh, 3 đỉnh", "4 cạnh, 4 đỉnh", "3 cạnh, 4 đỉnh", "4 cạnh, 3 đỉnh"],
+          answer: "3 cạnh, 3 đỉnh",
+          explain: "Tam giác: 3 cạnh, 3 đỉnh.",
+        });
+      },
+      function () {
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Khối lập phương có bao nhiêu đỉnh?",
+          type: "mc",
+          options: numMc(8, 3),
+          answer: 8,
+          explain: "Lập phương: 8 đỉnh, 12 cạnh, 6 mặt vuông.",
+        });
+      },
+      function () {
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Các mặt của khối hộp chữ nhật là hình gì?",
+          type: "mc",
+          options: ["Hình chữ nhật", "Hình tròn", "Hình tam giác", "Hình thoi"],
+          answer: "Hình chữ nhật",
+          explain: "6 mặt đều là hình chữ nhật.",
+        });
+      },
+      function () {
+        var w = rand(4, 12);
+        var k = pick([2, 3, 4]);
+        var L = w * k;
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text:
+            "HCN dài " +
+            L +
+            " cm, dài gấp " +
+            k +
+            " lần rộng. Tổng dài + rộng là:",
+          type: "input",
+          answer: L + w,
+          explainSteps: [
+            "Rộng = " + L + " : " + k + " = " + w + " cm.",
+            "Tổng = " + L + " + " + w + " = " + (L + w) + " cm.",
+          ],
+        });
+      },
+    ])();
+  }
+
+  function genNhan2ChuSo(week, level) {
+    var a = rand(12, 48);
+    var b = level === "advanced" ? rand(3, 8) : rand(2, 5);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Nhân: " + a + " × " + b + " = ?",
+      type: level === "advanced" ? "input" : "mc",
+      options: numMc(a * b, 15),
+      answer: a * b,
+      explainSteps: [
+        "Nhân số có hai chữ số với số có một chữ số.",
+        a + " × " + b + " = " + a * b + ".",
+      ],
+    });
+  }
+
+  function genChia2ChuSo(week, level) {
+    var b = level === "advanced" ? rand(3, 8) : rand(2, 6);
+    var qv = rand(11, 35);
+    var a = b * qv;
+    if (level === "advanced" && Math.random() < 0.4) {
+      var r = rand(1, b - 1);
+      a = b * qv + r;
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Chia " + a + " : " + b + ". Thương là? (không hỏi số dư)",
+        type: "input",
+        answer: qv,
+        explainSteps: [
+          a + " = " + b + " × " + qv + " + " + r + ".",
+          "Thương = " + qv + ", số dư = " + r + ".",
+        ],
+        explainTip: "Chia có dư: số bị chia = số chia × thương + dư (dư < số chia).",
+      });
+    }
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: a + " : " + b + " = ?",
+      type: "mc",
+      options: numMc(qv, 6),
+      answer: qv,
+      explain: a + " : " + b + " = " + qv,
+    });
+  }
+
+  function genGapLan(week, level) {
+    var n = rand(4, 15);
+    var k = pick([2, 3, 4, 5, 6, 7, 8, 9]);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Gấp " + n + " lên " + k + " lần được:",
+      type: "mc",
+      options: numMc(n * k, 12),
+      answer: n * k,
+      explainSteps: [
+        "Gấp lên " + k + " lần = nhân với " + k + ".",
+        n + " × " + k + " = " + n * k + ".",
+      ],
+      explainTip: "Gấp k lần → × k.",
+    });
+  }
+
+  function genGiamLan(week, level) {
+    var k = pick([2, 3, 4, 5, 6, 7, 8, 9]);
+    var result = rand(3, 15);
+    var n = result * k;
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Giảm " + n + " đi " + k + " lần được:",
+      type: "mc",
+      options: numMc(result, 6),
+      answer: result,
+      explainSteps: [
+        "Giảm đi " + k + " lần = chia cho " + k + ".",
+        n + " : " + k + " = " + result + ".",
+      ],
+      explainTip: "Giảm k lần → : k.",
+    });
+  }
+
+  function genHaiBuoc(week, level) {
+    var a = rand(20, 50);
+    var b = rand(10, 30);
+    var c = rand(2, 5);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text:
+        "Có " +
+        a +
+        " cái kẹo đỏ và " +
+        b +
+        " cái kẹo xanh. " +
+        c +
+        " hộp như vậy có tất cả bao nhiêu cái kẹo?",
+      type: "input",
+      answer: (a + b) * c,
+      explainSteps: [
+        "Bước 1: Mỗi hộp có " + a + " + " + b + " = " + (a + b) + " cái.",
+        "Bước 2: " + c + " hộp: " + (a + b) + " × " + c + " = " + (a + b) * c + " cái.",
+      ],
+      explainTip: "Bài 2 bước: tính mỗi phần trước, rồi nhân/cộng tiếp.",
+    });
+  }
+
+  function genMmGam(week, level) {
+    if (Math.random() < 0.5) {
+      var cm = rand(2, 15);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: cm + " cm = ? mm",
+        type: "mc",
+        options: numMc(cm * 10, 20),
+        answer: cm * 10,
+        explainSteps: ["1 cm = 10 mm.", cm + " cm = " + cm + " × 10 = " + cm * 10 + " mm."],
+        explainTip: "1 cm = 10 mm · 1 m = 100 cm.",
+      });
+    }
+    var kg = rand(1, 5);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: kg + " kg = ? g",
+      type: "mc",
+      options: numMc(kg * 1000, 500),
+      answer: kg * 1000,
+      explainSteps: ["1 kg = 1000 g.", kg + " kg = " + kg * 1000 + " g."],
+    });
+  }
+
+  function genMlNhiet(week, level) {
+    if (Math.random() < 0.5) {
+      var l = rand(1, 5);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: l + " l = ? ml",
+        type: "mc",
+        options: numMc(l * 1000, 500),
+        answer: l * 1000,
+        explainSteps: ["1 l = 1000 ml.", l + " l = " + l * 1000 + " ml."],
+      });
+    }
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Nhiệt độ nước sôi (ở điều kiện thường) khoảng bao nhiêu °C?",
+      type: "mc",
+      options: ["0", "37", "100", "1000"],
+      answer: "100",
+      explain: "Nước sôi khoảng 100°C; nước đóng băng 0°C.",
+    });
+  }
+
+  function genNhan3ChuSo(week, level) {
+    var a = rand(102, 350);
+    var b = level === "advanced" ? rand(3, 7) : rand(2, 5);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: a + " × " + b + " = ?",
+      type: "input",
+      answer: a * b,
+      explain: a + " × " + b + " = " + a * b,
+    });
+  }
+
+  function genChia3ChuSo(week, level) {
+    var b = level === "advanced" ? rand(3, 8) : rand(2, 6);
+    var qv = rand(25, 120);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: b * qv + " : " + b + " = ?",
+      type: "input",
+      answer: qv,
+      explain: b * qv + " : " + b + " = " + qv,
+    });
+  }
+
+  function genBieuThuc(week, level) {
+    var a = rand(10, 40);
+    var b = rand(2, 9);
+    var c = rand(2, 9);
+    // a + b * c  or (a+b)*c
+    if (Math.random() < 0.5) {
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Tính: " + a + " + " + b + " × " + c + " = ?",
+        type: "input",
+        answer: a + b * c,
+        explainSteps: [
+          "Nhân trước: " + b + " × " + c + " = " + b * c + ".",
+          "Cộng: " + a + " + " + b * c + " = " + (a + b * c) + ".",
+        ],
+        explainTip: "Không có ngoặc: nhân/chia trước, cộng/trừ sau.",
+      });
+    }
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Tính: (" + a + " + " + b + ") × " + c + " = ?",
+      type: "input",
+      answer: (a + b) * c,
+      explainSteps: [
+        "Trong ngoặc trước: " + a + " + " + b + " = " + (a + b) + ".",
+        "Nhân: " + (a + b) + " × " + c + " = " + (a + b) * c + ".",
+      ],
+    });
+  }
+
+  function genGapMayLan(week, level) {
+    var small = rand(4, 15);
+    var k = pick([2, 3, 4, 5, 6]);
+    var big = small * k;
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: big + " gấp mấy lần " + small + "?",
+      type: "mc",
+      options: numMc(k, 3),
+      answer: k,
+      explainSteps: [
+        "Số lần = số lớn : số bé.",
+        big + " : " + small + " = " + k + " lần.",
+      ],
+      explainTip: "Gấp mấy lần = chia số lớn cho số bé.",
+    });
+  }
+
+  function genSo10000(week, level) {
+    var a = rand(1000, 9999);
+    var b = rand(1000, 9999);
+    if (a === b) b += 10;
+    var ans = a > b ? ">" : "<";
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "So sánh: " + a.toLocaleString("vi-VN") + "  ___  " + b.toLocaleString("vi-VN"),
+      type: "mc",
+      options: [">", "<", "="],
+      answer: ans,
+      explain: a + " " + ans + " " + b,
+    });
+  }
+
+  function genLaMa(week, level) {
+    var map = [
+      [1, "I"],
+      [2, "II"],
+      [3, "III"],
+      [4, "IV"],
+      [5, "V"],
+      [6, "VI"],
+      [7, "VII"],
+      [8, "VIII"],
+      [9, "IX"],
+      [10, "X"],
+      [11, "XI"],
+      [12, "XII"],
+      [20, "XX"],
+      [21, "XXI"],
+    ];
+    var pair = pick(map);
+    if (Math.random() < 0.5) {
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Chữ số La Mã " + pair[1] + " bằng số nào?",
+        type: "mc",
+        options: numMc(pair[0], 4),
+        answer: pair[0],
+        explain: pair[1] + " = " + pair[0],
+      });
+    }
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Số " + pair[0] + " viết bằng chữ số La Mã là:",
+      type: "mc",
+      options: shuffle([pair[1], "I", "V", "X", "XII", "IV"]).filter(function (v, i, a) {
+        return a.indexOf(v) === i;
+      }).slice(0, 4),
+      answer: pair[1],
+      explain: pair[0] + " = " + pair[1],
+    });
+  }
+
+  function genLamTron(week, level) {
+    if (week >= 27) {
+      var n = rand(1500, 9500);
+      var toThou = Math.round(n / 1000) * 1000;
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Làm tròn " + n + " đến hàng nghìn:",
+        type: "mc",
+        options: numMc(toThou, 1000),
+        answer: toThou,
+        explainSteps: [
+          "Nhìn hàng trăm để làm tròn hàng nghìn.",
+          n + " ≈ " + toThou + ".",
+        ],
+      });
+    }
+    var n2 = rand(15, 994);
+    var toTen = Math.round(n2 / 10) * 10;
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Làm tròn " + n2 + " đến hàng chục:",
+      type: "mc",
+      options: numMc(toTen, 10),
+      answer: toTen,
+      explain: n2 + " làm tròn hàng chục = " + toTen,
+    });
+  }
+
+  function genChuVi(week, level) {
+    if (Math.random() < 0.4) {
+      var c = rand(4, 15);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Hình vuông cạnh " + c + " cm. Chu vi là:",
+        type: "mc",
+        options: numMc(4 * c, 10),
+        answer: 4 * c,
+        explainSteps: [
+          "Chu vi hình vuông = cạnh × 4.",
+          c + " × 4 = " + 4 * c + " cm.",
+        ],
+      });
+    }
+    var d = rand(5, 20);
+    var r = rand(3, 15);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "HCN dài " + d + " cm, rộng " + r + " cm. Chu vi là:",
+      type: "mc",
+      options: numMc(2 * (d + r), 12),
+      answer: 2 * (d + r),
+      explainSteps: [
+        "Chu vi HCN = (dài + rộng) × 2.",
+        "(" + d + " + " + r + ") × 2 = " + 2 * (d + r) + " cm.",
+      ],
+    });
+  }
+
+  function genDienTich(week, level) {
+    if (Math.random() < 0.4) {
+      var c = rand(4, 14);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Hình vuông cạnh " + c + " cm. Diện tích là (cm²):",
+        type: "input",
+        answer: c * c,
+        explainSteps: [
+          "Diện tích HV = cạnh × cạnh.",
+          c + " × " + c + " = " + c * c + " cm².",
+        ],
+      });
+    }
+    var d = rand(5, 18);
+    var r = rand(3, 14);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "HCN dài " + d + " cm, rộng " + r + " cm. Diện tích (cm²):",
+      type: "input",
+      answer: d * r,
+      explainSteps: [
+        "Diện tích HCN = dài × rộng.",
+        d + " × " + r + " = " + d * r + " cm².",
+      ],
+      explainTip: "Đơn vị diện tích: cm² (xăng-ti-mét vuông).",
+    });
+  }
+
+  function genCongTru10000(week, level) {
+    var a = rand(2000, 8000);
+    var b = rand(1000, 4000);
+    if (Math.random() < 0.5) {
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: a + " + " + b + " = ?",
+        type: "input",
+        answer: a + b,
+        explain: a + " + " + b + " = " + (a + b),
+      });
+    }
+    if (a < b) {
+      var t = a;
+      a = b + rand(500, 2000);
+      b = t;
+    }
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: a + " − " + b + " = ?",
+      type: "input",
+      answer: a - b,
+      explain: a + " − " + b + " = " + (a - b),
+    });
+  }
+
+  function genNhan4ChuSo(week, level) {
+    var a = rand(1000, 3500);
+    var b = level === "advanced" ? rand(3, 7) : rand(2, 5);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: a + " × " + b + " = ?",
+      type: "input",
+      answer: a * b,
+      explain: a + " × " + b + " = " + a * b,
+    });
+  }
+
+  function genChia4ChuSo(week, level) {
+    var b = level === "advanced" ? rand(3, 8) : rand(2, 6);
+    var qv = rand(200, 900);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: b * qv + " : " + b + " = ?",
+      type: "input",
+      answer: qv,
+      explain: b * qv + " : " + b + " = " + qv,
+    });
+  }
+
+  function genSo100000(week, level) {
+    var a = rand(10000, 90000);
+    var b = rand(10000, 90000);
+    if (a === b) b += 100;
+    var ans = a > b ? ">" : "<";
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text:
+        "So sánh: " +
+        a.toLocaleString("vi-VN") +
+        "  ___  " +
+        b.toLocaleString("vi-VN"),
+      type: "mc",
+      options: [">", "<", "="],
+      answer: ans,
+      explain: a + " " + ans + " " + b,
+    });
+  }
+
+  function genCongTru100000(week, level) {
+    var a = rand(20000, 70000);
+    var b = rand(10000, 40000);
+    if (Math.random() < 0.5) {
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: a + " + " + b + " = ?",
+        type: "input",
+        answer: a + b,
+        explain: a + " + " + b + " = " + (a + b),
+      });
+    }
+    if (a <= b) a = b + rand(5000, 20000);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: a + " − " + b + " = ?",
+      type: "input",
+      answer: a - b,
+      explain: a + " − " + b + " = " + (a - b),
+    });
+  }
+
+  function genDongHoThangNam(week, level) {
+    if (Math.random() < 0.5) {
+      var h = rand(1, 3);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: h + " giờ = ? phút",
+        type: "mc",
+        options: numMc(h * 60, 30),
+        answer: h * 60,
+        explain: "1 giờ = 60 phút → " + h + " giờ = " + h * 60 + " phút.",
+      });
+    }
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Một năm thường có bao nhiêu tháng?",
+      type: "mc",
+      options: ["10", "11", "12", "13"],
+      answer: "12",
+      explain: "Một năm có 12 tháng.",
+    });
+  }
+
+  function genNhan5ChuSo(week, level) {
+    var a = rand(10000, 25000);
+    var b = level === "advanced" ? rand(3, 6) : rand(2, 4);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: a + " × " + b + " = ?",
+      type: "input",
+      answer: a * b,
+      explain: a + " × " + b + " = " + a * b,
+    });
+  }
+
+  function genChia5ChuSo(week, level) {
+    var b = level === "advanced" ? rand(3, 7) : rand(2, 5);
+    var qv = rand(2000, 8000);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: b * qv + " : " + b + " = ?",
+      type: "input",
+      answer: qv,
+      explain: b * qv + " : " + b + " = " + qv,
+    });
+  }
+
+  function genBangSoLieu(week, level) {
+    var a = rand(5, 20);
+    var b = rand(5, 20);
+    var c = rand(5, 20);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text:
+        "Bảng điểm: An " +
+        a +
+        " điểm, Bình " +
+        b +
+        " điểm, Chi " +
+        c +
+        " điểm. Tổng điểm ba bạn là:",
+      type: "mc",
+      options: numMc(a + b + c, 10),
+      answer: a + b + c,
+      explain: a + " + " + b + " + " + c + " = " + (a + b + c),
+    });
+  }
+
+  function genXacSuat(week, level) {
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Tung một đồng xu công bằng. Khả năng ra mặt sấp là:",
+      type: "mc",
+      options: ["Chắc chắn xảy ra", "Không thể xảy ra", "Có thể xảy ra", "Luôn ra ngửa"],
+      answer: "Có thể xảy ra",
+      explainSteps: [
+        "Đồng xu có 2 mặt: sấp hoặc ngửa.",
+        "Ra sấp là việc có thể xảy ra (không chắc chắn 100%).",
+      ],
+    });
+  }
+
+  /**
+   * Map tuần → danh sách skill (khớp dàn ý MathX/KNTT)
+   * Mỗi phần tử là function(week, level)
+   */
+  function skillsForWeek(week, level) {
+    var map = {
+      1: [genSoDen1000, genCongTru1000],
+      2: [genThanhPhanCongTru, function (w, l) { return genBangNhanChia(w, l, [2, 5]); }],
+      3: [function (w, l) { return genBangNhanChia(w, l, [3, 4]); }],
+      4: [genHinhPhangKhoi, genTrungDiem, function (w, l) { return genBangNhanChia(w, l, [6]); }],
+      5: [function (w, l) { return genBangNhanChia(w, l, [7, 8]); }],
+      6: [
+        function (w, l) { return genBangNhanChia(w, l, [9]); },
+        function (w, l) { return genBangNhanChia(w, l, [9]); },
+      ],
+      7: [genMotPhanMay, genTrungDiem],
+      8: [genHinhTron, genGoc],
+      9: [genHinhPhangKhoi],
+      10: [genNhan2ChuSo, genGapLan],
+      11: [genChia2ChuSo],
+      12: [genGiamLan, genHaiBuoc],
+      13: [genMmGam],
+      14: [genMlNhiet],
+      15: [genNhan3ChuSo, genChia3ChuSo],
+      16: [genBieuThuc, genGapMayLan],
+      17: [
+        function (w, l) { return genBangNhanChia(w, l, [2, 3, 4, 5, 6, 7, 8, 9]); },
+        genBieuThuc,
+        genNhan3ChuSo,
+        genChia3ChuSo,
+      ],
+      18: [genHinhPhangKhoi, genChuVi, genTrungDiem, genGoc, genHinhTron, genMmGam],
+      19: [genSo10000],
+      20: [genLaMa, genLamTron],
+      21: [genChuVi, genDienTich],
+      22: [genDienTich],
+      23: [genCongTru10000],
+      24: [genNhan4ChuSo],
+      25: [genChia4ChuSo],
+      26: [genSo100000],
+      27: [genSo100000, genLamTron],
+      28: [genCongTru100000],
+      29: [genDongHoThangNam],
+      30: level === "advanced" ? [genH_adv] : [genH_basic],
+      31: [genNhan5ChuSo],
+      32: [genChia5ChuSo],
+      33: [genBangSoLieu, genXacSuat, genSo100000, genSo10000],
+      34: [genCongTru100000, genNhan5ChuSo, genChia5ChuSo, genNhan4ChuSo, genChia4ChuSo],
+      35: [genHinhPhangKhoi, genChuVi, genDienTich, genBangSoLieu, genXacSuat, genMmGam],
+    };
+    return map[week] || [genSoDen1000, genCongTru1000];
+  }
+
+  /** Chọn generator theo đúng chủ đề tuần */
   function generateMathXQuestion(week, level) {
     week = Number(week) || 0;
     if (week < 1 || week > 35) week = rand(1, 35);
-    var isAdv = level === "advanced";
-    var item;
+    level = level === "advanced" ? "advanced" : "basic";
 
-    if (week <= 5) item = isAdv ? genA_adv(week, level) : genA_basic(week, level);
-    else if (week <= 8) item = isAdv ? genB_adv(week, level) : genB_basic(week, level);
-    else if (week <= 11) item = isAdv ? genC_adv(week, level) : genC_basic(week, level);
-    else if (week <= 14) item = isAdv ? genD_adv(week, level) : genD_basic(week, level);
-    else if (week <= 18) item = isAdv ? genE_adv(week, level) : genE_basic(week, level);
-    else if (week <= 23) item = isAdv ? genF_adv(week, level) : genF_basic(week, level);
-    else if (week <= 27) item = isAdv ? genF_adv(week, level) : genG_basic(week, level);
-    else if (week <= 30) item = isAdv ? genH_adv(week, level) : genH_basic(week, level);
-    else if (week <= 32) item = isAdv ? genI_adv(week, level) : genI_basic(week, level);
-    else if (week === 33)
-      item = isAdv ? genE_adv(week, level) : genE_basic(week, level); // số liệu / ôn hình đo
-    else if (week === 34) item = isAdv ? genI_adv(week, level) : genI_basic(week, level);
-    else item = isAdv ? genC_adv(week, level) : genC_basic(week, level); // T35 ôn hình + số liệu
+    var skills = skillsForWeek(week, level);
+    // genH_basic expects (week, level) — ok
+    var fn = pick(skills);
+    var item;
+    try {
+      item = fn(week, level);
+    } catch (e) {
+      item = genSoDen1000(week, level);
+    }
+
+    // Nâng cao: đôi khi thêm bước từ genA_adv kiểu quan hệ số hạng khi tuần 1-2
+    if (level === "advanced" && (week === 1 || week === 2) && Math.random() < 0.35) {
+      try {
+        item = genA_adv(week, level);
+      } catch (e2) {
+        /* keep item */
+      }
+    }
 
     item.week = week;
     item.level = level;
-    if (!item.topicId || item.topicId.indexOf("mathx") !== 0) {
-      item.topicId = tid(week);
-    }
-    // Fallback explainSteps từ explain nhiều dòng
+    item.topicId = tid(week);
     if (!item.explainSteps && item.explain && String(item.explain).indexOf("\n") >= 0) {
       item.explainSteps = String(item.explain)
         .split(/\n+/)
