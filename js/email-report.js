@@ -642,11 +642,158 @@
     );
   }
 
+  var REASON_LABELS = {
+    kho: "Câu quá khó / ngoài chương trình tuần này",
+    "loi-de": "Đề bài sai / khó hiểu / định dạng lỗi",
+    "loi-dap-an": "Nghi ngờ đáp án / lời giải sai",
+    khac: "Lý do khác",
+  };
+
+  /**
+   * Báo cáo câu hỏi (khó ngoài CT / lỗi đề) → chỉ gửi email Ba
+   * report: { reason, note, question, sessionMeta }
+   */
+  function sendBugReport(state, report) {
+    report = report || {};
+    var dadKey =
+      (state && state.web3formsKeyDad && String(state.web3formsKeyDad).trim()) ||
+      DEFAULT_KEY_DAD;
+    if (!dadKey) {
+      return Promise.resolve({
+        ok: false,
+        error: "Chưa có Access Key email Ba (Web3Forms).",
+      });
+    }
+
+    var q = report.question || {};
+    var meta = report.sessionMeta || {};
+    var reasonKey = report.reason || "kho";
+    var reasonText = REASON_LABELS[reasonKey] || reasonKey;
+    var note = (report.note || "").trim();
+    var childName = (state && state.childName) || "Bé";
+    var when = new Date().toLocaleString("vi-VN");
+
+    var topicLabel = q.topicId || meta.topicId || "—";
+    try {
+      if (typeof getTopic === "function") {
+        var tp = getTopic(meta.topicId || q.topicId);
+        if (tp && tp.name) topicLabel = (tp.emoji ? tp.emoji + " " : "") + tp.name;
+      }
+    } catch (e) {
+      /* ignore */
+    }
+
+    var lines = [
+      "BÁO CÁO CÂU HỎI TỪ APP TOÁN LỚP 3",
+      "================================",
+      "",
+      "• Thời gian: " + when,
+      "• Bé: " + childName,
+      "• Lý do: " + reasonText,
+      note ? "• Ghi chú: " + note : null,
+      "",
+      "— Phiên luyện —",
+      "• Chủ đề / tuần: " + topicLabel,
+      "• Mức: " + (meta.level === "advanced" ? "Nâng cao" : "Cơ bản"),
+      "• Câu số: " + (meta.questionIndex != null ? meta.questionIndex + 1 : "?") +
+        " / " +
+        (meta.totalQuestions || "?"),
+      "• Week (engine): " + (q.week != null ? q.week : "—"),
+      "",
+      "— Nội dung câu hỏi —",
+      "• Đề: " + (q.text || "(trống)"),
+      "• Loại: " + (q.type || "—"),
+      "• Đáp án hệ thống: " + (q.answer != null ? q.answer : "—"),
+      q.options && q.options.length
+        ? "• Lựa chọn: " + q.options.join(" | ")
+        : null,
+      q.explain ? "• Explain: " + String(q.explain).slice(0, 300) : null,
+      q.explainSteps && q.explainSteps.length
+        ? "• Các bước giải: " + q.explainSteps.join(" → ")
+        : null,
+      "",
+      "— Gợi ý xử lý —",
+      "1) Kiểm tra đề có khớp chủ đề tuần không.",
+      "2) Kiểm tra số liệu có quá tầm (số quá lớn / phép chưa học).",
+      "3) Kiểm tra đáp án & lời giải.",
+      "4) Yêu cầu fix app (mathx-questions.js / questions.js).",
+      "",
+      "App: https://quangtran-123corp.github.io/toan-lop3/",
+    ].filter(function (line) {
+      return line != null;
+    });
+
+    var subject =
+      "[Báo cáo đề] " +
+      childName +
+      " — " +
+      reasonText.slice(0, 40) +
+      " — T" +
+      (q.week != null ? q.week : "?");
+
+    var body = {
+      access_key: dadKey,
+      subject: subject,
+      from_name: "Toán Lớp 3 App · Báo cáo",
+      message: lines.join("\n"),
+    };
+
+    return fetch(WEB3FORMS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(body),
+    })
+      .then(function (res) {
+        return res.text().then(function (text) {
+          var data = null;
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            data = { raw: text };
+          }
+          var ok =
+            data.success === true ||
+            data.success === "true" ||
+            (res.ok && /success|sent|thank/i.test(String(data.message || text)));
+          if (data.success === false || data.success === "false") ok = false;
+          try {
+            localStorage.setItem(
+              "toan-lop3-last-bug-report",
+              JSON.stringify({
+                at: Date.now(),
+                ok: ok,
+                reason: reasonKey,
+                text: (q.text || "").slice(0, 120),
+              })
+            );
+          } catch (e2) {
+            /* ignore */
+          }
+          return {
+            ok: ok,
+            error: ok ? null : String(data.message || text || "Gửi thất bại"),
+          };
+        });
+      })
+      .catch(function (err) {
+        return {
+          ok: false,
+          error: err && err.message ? err.message : String(err),
+        };
+      });
+  }
+
   global.EmailReport = {
     PROVIDER: "web3forms",
     SETUP_URL: "https://web3forms.com",
     DEFAULT_EMAIL: DEFAULT_EMAILS[0],
     DEFAULT_EMAILS: DEFAULT_EMAILS,
+    DEFAULT_KEY_DAD: DEFAULT_KEY_DAD,
+    DEFAULT_KEY_MOM: DEFAULT_KEY_MOM,
+    REASON_LABELS: REASON_LABELS,
     getParentEmail: function (state) {
       return getParentEmails(state)[0];
     },
@@ -657,6 +804,7 @@
     shouldNotify: shouldNotify,
     sendStreakReport: sendStreakReport,
     sendTestEmail: sendTestEmail,
+    sendBugReport: sendBugReport,
     buildMessage: buildMessage,
     analyzePerformance: analyzePerformance,
   };

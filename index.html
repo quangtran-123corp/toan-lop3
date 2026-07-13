@@ -871,6 +871,157 @@ body {
   min-height: 1.5em;
 }
 
+/* Report button + modal */
+.btn-report {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 2px dashed #FECACA;
+  border-radius: 12px;
+  background: #FEF2F2;
+  color: #B91C1C;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+
+.btn-report:active {
+  transform: scale(0.98);
+}
+
+.btn-report:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.report-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  background: rgba(30, 27, 75, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+}
+
+.report-modal[hidden] {
+  display: none !important;
+}
+
+.report-dialog {
+  width: 100%;
+  max-width: 440px;
+  background: #fff;
+  border-radius: 20px 20px 16px 16px;
+  padding: 20px 18px 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: fadeIn 0.25s ease;
+}
+
+.report-dialog h2 {
+  font-size: 1.15rem;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+
+.report-hint {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.report-q-preview {
+  font-size: 0.9rem;
+  font-weight: 800;
+  background: #EEF2FF;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  color: #312E81;
+  line-height: 1.4;
+  max-height: 5.5em;
+  overflow: hidden;
+}
+
+.report-label {
+  display: block;
+  font-weight: 900;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+}
+
+.report-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.report-reason {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #F8FAFC;
+  border: 2px solid #E2E8F0;
+  cursor: pointer;
+}
+
+.report-reason:has(input:checked) {
+  border-color: #818CF8;
+  background: #EEF2FF;
+}
+
+.report-reason input {
+  margin-top: 2px;
+  accent-color: var(--primary);
+}
+
+#report-note {
+  width: 100%;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 2px solid #E0E7FF;
+  resize: vertical;
+  margin-bottom: 12px;
+  outline: none;
+}
+
+#report-note:focus {
+  border-color: var(--primary);
+}
+
+.report-actions {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 8px;
+}
+
+.report-status {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-align: center;
+  color: #059669;
+}
+
+.report-status.err {
+  color: #DC2626;
+}
+
 /* Result */
 #screen-result {
   padding-top: 24px;
@@ -1310,10 +1461,34 @@ body {
         <div class="feedback" id="feedback" hidden></div>
         <button type="button" class="btn btn-primary btn-lg btn-block" id="btn-check" hidden>Kiểm tra ✓</button>
         <button type="button" class="btn btn-primary btn-lg btn-block" id="btn-next" hidden>Câu tiếp →</button>
+        <button type="button" class="btn-report" id="btn-report-q" title="Báo cáo câu khó hoặc lỗi đề">🚩 Báo cáo câu này</button>
       </div>
 
       <div class="encourage" id="encourage" aria-live="polite"></div>
     </section>
+
+    <!-- REPORT MODAL -->
+    <div id="report-modal" class="report-modal" hidden>
+      <div class="report-dialog" role="dialog" aria-labelledby="report-title">
+        <h2 id="report-title">🚩 Báo cáo cho Ba</h2>
+        <p class="report-hint">Bé gặp câu khó ngoài chương trình, hoặc đề bị lỗi định dạng / đáp án?</p>
+        <p class="report-q-preview" id="report-q-preview"></p>
+        <label class="report-label">Lý do</label>
+        <div class="report-reasons" id="report-reasons">
+          <label class="report-reason"><input type="radio" name="report-reason" value="kho" checked /> Câu quá khó / ngoài chương trình tuần này</label>
+          <label class="report-reason"><input type="radio" name="report-reason" value="loi-de" /> Đề bài sai / khó hiểu / định dạng lỗi</label>
+          <label class="report-reason"><input type="radio" name="report-reason" value="loi-dap-an" /> Nghi ngờ đáp án / lời giải sai</label>
+          <label class="report-reason"><input type="radio" name="report-reason" value="khac" /> Lý do khác</label>
+        </div>
+        <label class="report-label" for="report-note">Ghi chú thêm (không bắt buộc)</label>
+        <textarea id="report-note" rows="2" maxlength="200" placeholder="Ví dụ: số quá lớn, chưa học chia..."></textarea>
+        <div class="report-actions">
+          <button type="button" class="btn btn-secondary" id="btn-report-cancel">Hủy</button>
+          <button type="button" class="btn btn-primary" id="btn-report-send">Gửi cho Ba 📧</button>
+        </div>
+        <p class="report-status" id="report-status" hidden></p>
+      </div>
+    </div>
 
     <!-- RESULT -->
     <section id="screen-result" class="screen">
@@ -8060,11 +8235,158 @@ window.questionKey = questionKey;
     );
   }
 
+  var REASON_LABELS = {
+    kho: "Câu quá khó / ngoài chương trình tuần này",
+    "loi-de": "Đề bài sai / khó hiểu / định dạng lỗi",
+    "loi-dap-an": "Nghi ngờ đáp án / lời giải sai",
+    khac: "Lý do khác",
+  };
+
+  /**
+   * Báo cáo câu hỏi (khó ngoài CT / lỗi đề) → chỉ gửi email Ba
+   * report: { reason, note, question, sessionMeta }
+   */
+  function sendBugReport(state, report) {
+    report = report || {};
+    var dadKey =
+      (state && state.web3formsKeyDad && String(state.web3formsKeyDad).trim()) ||
+      DEFAULT_KEY_DAD;
+    if (!dadKey) {
+      return Promise.resolve({
+        ok: false,
+        error: "Chưa có Access Key email Ba (Web3Forms).",
+      });
+    }
+
+    var q = report.question || {};
+    var meta = report.sessionMeta || {};
+    var reasonKey = report.reason || "kho";
+    var reasonText = REASON_LABELS[reasonKey] || reasonKey;
+    var note = (report.note || "").trim();
+    var childName = (state && state.childName) || "Bé";
+    var when = new Date().toLocaleString("vi-VN");
+
+    var topicLabel = q.topicId || meta.topicId || "—";
+    try {
+      if (typeof getTopic === "function") {
+        var tp = getTopic(meta.topicId || q.topicId);
+        if (tp && tp.name) topicLabel = (tp.emoji ? tp.emoji + " " : "") + tp.name;
+      }
+    } catch (e) {
+      /* ignore */
+    }
+
+    var lines = [
+      "BÁO CÁO CÂU HỎI TỪ APP TOÁN LỚP 3",
+      "================================",
+      "",
+      "• Thời gian: " + when,
+      "• Bé: " + childName,
+      "• Lý do: " + reasonText,
+      note ? "• Ghi chú: " + note : null,
+      "",
+      "— Phiên luyện —",
+      "• Chủ đề / tuần: " + topicLabel,
+      "• Mức: " + (meta.level === "advanced" ? "Nâng cao" : "Cơ bản"),
+      "• Câu số: " + (meta.questionIndex != null ? meta.questionIndex + 1 : "?") +
+        " / " +
+        (meta.totalQuestions || "?"),
+      "• Week (engine): " + (q.week != null ? q.week : "—"),
+      "",
+      "— Nội dung câu hỏi —",
+      "• Đề: " + (q.text || "(trống)"),
+      "• Loại: " + (q.type || "—"),
+      "• Đáp án hệ thống: " + (q.answer != null ? q.answer : "—"),
+      q.options && q.options.length
+        ? "• Lựa chọn: " + q.options.join(" | ")
+        : null,
+      q.explain ? "• Explain: " + String(q.explain).slice(0, 300) : null,
+      q.explainSteps && q.explainSteps.length
+        ? "• Các bước giải: " + q.explainSteps.join(" → ")
+        : null,
+      "",
+      "— Gợi ý xử lý —",
+      "1) Kiểm tra đề có khớp chủ đề tuần không.",
+      "2) Kiểm tra số liệu có quá tầm (số quá lớn / phép chưa học).",
+      "3) Kiểm tra đáp án & lời giải.",
+      "4) Yêu cầu fix app (mathx-questions.js / questions.js).",
+      "",
+      "App: https://quangtran-123corp.github.io/toan-lop3/",
+    ].filter(function (line) {
+      return line != null;
+    });
+
+    var subject =
+      "[Báo cáo đề] " +
+      childName +
+      " — " +
+      reasonText.slice(0, 40) +
+      " — T" +
+      (q.week != null ? q.week : "?");
+
+    var body = {
+      access_key: dadKey,
+      subject: subject,
+      from_name: "Toán Lớp 3 App · Báo cáo",
+      message: lines.join("\n"),
+    };
+
+    return fetch(WEB3FORMS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(body),
+    })
+      .then(function (res) {
+        return res.text().then(function (text) {
+          var data = null;
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            data = { raw: text };
+          }
+          var ok =
+            data.success === true ||
+            data.success === "true" ||
+            (res.ok && /success|sent|thank/i.test(String(data.message || text)));
+          if (data.success === false || data.success === "false") ok = false;
+          try {
+            localStorage.setItem(
+              "toan-lop3-last-bug-report",
+              JSON.stringify({
+                at: Date.now(),
+                ok: ok,
+                reason: reasonKey,
+                text: (q.text || "").slice(0, 120),
+              })
+            );
+          } catch (e2) {
+            /* ignore */
+          }
+          return {
+            ok: ok,
+            error: ok ? null : String(data.message || text || "Gửi thất bại"),
+          };
+        });
+      })
+      .catch(function (err) {
+        return {
+          ok: false,
+          error: err && err.message ? err.message : String(err),
+        };
+      });
+  }
+
   global.EmailReport = {
     PROVIDER: "web3forms",
     SETUP_URL: "https://web3forms.com",
     DEFAULT_EMAIL: DEFAULT_EMAILS[0],
     DEFAULT_EMAILS: DEFAULT_EMAILS,
+    DEFAULT_KEY_DAD: DEFAULT_KEY_DAD,
+    DEFAULT_KEY_MOM: DEFAULT_KEY_MOM,
+    REASON_LABELS: REASON_LABELS,
     getParentEmail: function (state) {
       return getParentEmails(state)[0];
     },
@@ -8075,6 +8397,7 @@ window.questionKey = questionKey;
     shouldNotify: shouldNotify,
     sendStreakReport: sendStreakReport,
     sendTestEmail: sendTestEmail,
+    sendBugReport: sendBugReport,
     buildMessage: buildMessage,
     analyzePerformance: analyzePerformance,
   };
@@ -8809,8 +9132,123 @@ function bindEvents() {
   $("#btn-check").addEventListener("click", submitInput);
   $("#btn-next").addEventListener("click", nextQuestion);
 
+  // —— Báo cáo câu khó / lỗi đề → email Ba ——
+  function openReportModal() {
+    if (!session || !session.questions || !session.questions[session.index]) {
+      toast("Không có câu hỏi để báo cáo");
+      return;
+    }
+    const item = session.questions[session.index];
+    const modal = $("#report-modal");
+    const preview = $("#report-q-preview");
+    const note = $("#report-note");
+    const status = $("#report-status");
+    if (preview) {
+      preview.textContent =
+        (item.text || "").slice(0, 160) +
+        ((item.text || "").length > 160 ? "…" : "");
+    }
+    if (note) note.value = "";
+    if (status) {
+      status.hidden = true;
+      status.textContent = "";
+      status.className = "report-status";
+    }
+    const firstReason = document.querySelector(
+      'input[name="report-reason"][value="kho"]'
+    );
+    if (firstReason) firstReason.checked = true;
+    if (modal) modal.hidden = false;
+  }
+
+  function closeReportModal() {
+    const modal = $("#report-modal");
+    if (modal) modal.hidden = true;
+  }
+
+  function sendCurrentQuestionReport() {
+    if (!session || !session.questions) return;
+    const item = session.questions[session.index];
+    const reasonEl = document.querySelector(
+      'input[name="report-reason"]:checked'
+    );
+    const reason = reasonEl ? reasonEl.value : "kho";
+    const note = ($("#report-note") && $("#report-note").value) || "";
+    const status = $("#report-status");
+    const btnSend = $("#btn-report-send");
+
+    if (!window.EmailReport || !EmailReport.sendBugReport) {
+      toast("Chưa tải được module gửi email");
+      return;
+    }
+
+    if (btnSend) {
+      btnSend.disabled = true;
+      btnSend.textContent = "Đang gửi…";
+    }
+    if (status) {
+      status.hidden = false;
+      status.className = "report-status";
+      status.textContent = "Đang gửi báo cáo về email Ba…";
+    }
+
+    EmailReport.sendBugReport(state, {
+      reason: reason,
+      note: note,
+      question: {
+        text: item.text,
+        type: item.type,
+        answer: item.answer,
+        options: item.options,
+        explain: item.explain,
+        explainSteps: item.explainSteps,
+        topicId: item.topicId,
+        week: item.week,
+        level: item.level || session.level,
+      },
+      sessionMeta: {
+        topicId: session.topicId,
+        level: session.level,
+        questionIndex: session.index,
+        totalQuestions: session.questions.length,
+        isDaily: !!session.isDaily,
+      },
+    }).then(function (res) {
+      if (btnSend) {
+        btnSend.disabled = false;
+        btnSend.textContent = "Gửi cho Ba 📧";
+      }
+      if (res && res.ok) {
+        if (status) {
+          status.className = "report-status";
+          status.textContent = "✅ Đã gửi cho Ba (quangtran@123corp.vn)";
+        }
+        toast("Đã báo cáo cho Ba 📧");
+        sfx("pop");
+        setTimeout(closeReportModal, 900);
+      } else {
+        if (status) {
+          status.className = "report-status err";
+          status.textContent =
+            "⚠️ Gửi chưa được: " + (res && res.error ? res.error : "thử lại");
+        }
+        toast("Gửi báo cáo thất bại");
+      }
+    });
+  }
+
+  $("#btn-report-q")?.addEventListener("click", () => {
+    openReportModal();
+  });
+  $("#btn-report-cancel")?.addEventListener("click", closeReportModal);
+  $("#btn-report-send")?.addEventListener("click", sendCurrentQuestionReport);
+  $("#report-modal")?.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "report-modal") closeReportModal();
+  });
+
   $("#btn-quit").addEventListener("click", () => {
     if (confirm("Thoát buổi luyện? Tiến độ buổi này sẽ không được lưu.")) {
+      closeReportModal();
       renderHome();
       showScreen("home");
     }

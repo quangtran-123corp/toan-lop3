@@ -725,8 +725,123 @@ function bindEvents() {
   $("#btn-check").addEventListener("click", submitInput);
   $("#btn-next").addEventListener("click", nextQuestion);
 
+  // —— Báo cáo câu khó / lỗi đề → email Ba ——
+  function openReportModal() {
+    if (!session || !session.questions || !session.questions[session.index]) {
+      toast("Không có câu hỏi để báo cáo");
+      return;
+    }
+    const item = session.questions[session.index];
+    const modal = $("#report-modal");
+    const preview = $("#report-q-preview");
+    const note = $("#report-note");
+    const status = $("#report-status");
+    if (preview) {
+      preview.textContent =
+        (item.text || "").slice(0, 160) +
+        ((item.text || "").length > 160 ? "…" : "");
+    }
+    if (note) note.value = "";
+    if (status) {
+      status.hidden = true;
+      status.textContent = "";
+      status.className = "report-status";
+    }
+    const firstReason = document.querySelector(
+      'input[name="report-reason"][value="kho"]'
+    );
+    if (firstReason) firstReason.checked = true;
+    if (modal) modal.hidden = false;
+  }
+
+  function closeReportModal() {
+    const modal = $("#report-modal");
+    if (modal) modal.hidden = true;
+  }
+
+  function sendCurrentQuestionReport() {
+    if (!session || !session.questions) return;
+    const item = session.questions[session.index];
+    const reasonEl = document.querySelector(
+      'input[name="report-reason"]:checked'
+    );
+    const reason = reasonEl ? reasonEl.value : "kho";
+    const note = ($("#report-note") && $("#report-note").value) || "";
+    const status = $("#report-status");
+    const btnSend = $("#btn-report-send");
+
+    if (!window.EmailReport || !EmailReport.sendBugReport) {
+      toast("Chưa tải được module gửi email");
+      return;
+    }
+
+    if (btnSend) {
+      btnSend.disabled = true;
+      btnSend.textContent = "Đang gửi…";
+    }
+    if (status) {
+      status.hidden = false;
+      status.className = "report-status";
+      status.textContent = "Đang gửi báo cáo về email Ba…";
+    }
+
+    EmailReport.sendBugReport(state, {
+      reason: reason,
+      note: note,
+      question: {
+        text: item.text,
+        type: item.type,
+        answer: item.answer,
+        options: item.options,
+        explain: item.explain,
+        explainSteps: item.explainSteps,
+        topicId: item.topicId,
+        week: item.week,
+        level: item.level || session.level,
+      },
+      sessionMeta: {
+        topicId: session.topicId,
+        level: session.level,
+        questionIndex: session.index,
+        totalQuestions: session.questions.length,
+        isDaily: !!session.isDaily,
+      },
+    }).then(function (res) {
+      if (btnSend) {
+        btnSend.disabled = false;
+        btnSend.textContent = "Gửi cho Ba 📧";
+      }
+      if (res && res.ok) {
+        if (status) {
+          status.className = "report-status";
+          status.textContent = "✅ Đã gửi cho Ba (quangtran@123corp.vn)";
+        }
+        toast("Đã báo cáo cho Ba 📧");
+        sfx("pop");
+        setTimeout(closeReportModal, 900);
+      } else {
+        if (status) {
+          status.className = "report-status err";
+          status.textContent =
+            "⚠️ Gửi chưa được: " + (res && res.error ? res.error : "thử lại");
+        }
+        toast("Gửi báo cáo thất bại");
+      }
+    });
+  }
+
+  $("#btn-report-q")?.addEventListener("click", () => {
+    openReportModal();
+  });
+  $("#btn-report-cancel")?.addEventListener("click", closeReportModal);
+  $("#btn-report-send")?.addEventListener("click", sendCurrentQuestionReport);
+  $("#report-modal")?.addEventListener("click", (e) => {
+    if (e.target && e.target.id === "report-modal") closeReportModal();
+  });
+
   $("#btn-quit").addEventListener("click", () => {
     if (confirm("Thoát buổi luyện? Tiến độ buổi này sẽ không được lưu.")) {
+      closeReportModal();
       renderHome();
       showScreen("home");
     }
