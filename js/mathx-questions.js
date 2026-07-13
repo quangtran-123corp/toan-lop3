@@ -1497,23 +1497,35 @@
   }
 
   function genMotPhanMay(week, level) {
-    var d = pick([2, 3, 4, 5, 6, 8]);
-    var unit = rand(2, 8);
-    var total = d * unit;
-    if (level === "advanced" && Math.random() < 0.5) {
-      var n = rand(2, d - 1);
+    // Tuần 7: chỉ dùng bảng nhân đã học (2–9), thương 1 chữ số — tránh chia số lớn
+    var d = pick([2, 3, 4, 5, 6]);
+    var unit = rand(2, 9); // kết quả 1 chữ số
+    var total = d * unit; // trong bảng nhân, vd 6×4=24
+    // Giới hạn total nhỏ hơn cho cơ bản tuần ≤ 9
+    if ((week || 7) <= 9 && total > 36) {
+      unit = rand(2, 6);
+      total = d * unit;
+    }
+    if (level === "advanced" && d >= 3 && Math.random() < 0.45) {
+      var n = rand(2, Math.min(3, d - 1));
+      var ans = unit * n;
+      // giữ ans vừa phải
+      if (ans > 27) {
+        n = 2;
+        ans = unit * n;
+      }
       return q({
         topicId: tid(week),
         level: level,
         week: week,
         text: n + "/" + d + " của " + total + " bằng bao nhiêu?",
         type: "input",
-        answer: unit * n,
+        answer: ans,
         explainSteps: [
-          "Một phần " + d + " của " + total + " = " + total + " : " + d + " = " + unit + ".",
-          n + " phần = " + unit + " × " + n + " = " + unit * n + ".",
+          "Một phần " + d + " của " + total + " = " + total + " : " + d + " = " + unit + " (nhớ bảng nhân " + d + ").",
+          n + " phần = " + unit + " × " + n + " = " + ans + ".",
         ],
-        explainTip: "k/n của S = (S : n) × k.",
+        explainTip: "Một phần mấy = chia (dùng bảng nhân). k phần = nhân tiếp.",
       });
     }
     return q({
@@ -1522,38 +1534,69 @@
       week: week,
       text: "Một phần " + d + " của " + total + " là bao nhiêu?",
       type: "mc",
-      options: numMc(unit, 4),
+      options: numMc(unit, 3),
       answer: unit,
       explainSteps: [
         "Chia đều " + total + " thành " + d + " phần bằng nhau.",
-        total + " : " + d + " = " + unit + ".",
+        "Nhớ: " + d + " × " + unit + " = " + total + " → " + total + " : " + d + " = " + unit + ".",
       ],
-      explainTip: "Một phần mấy = chia cho mấy.",
+      explainTip: "Một phần mấy = chia cho mấy (dựa bảng nhân đã học).",
     });
   }
 
   function genTrungDiem(week, level) {
+    // Tuần 7: chưa học chia số 2 chữ số — AM luôn 1 chữ số (2–9), AB = 2×AM (4–18)
+    var am = rand(2, 9);
+    var len = am * 2; // 4,6,...,18 — bé nghĩ "gấp đôi / một nửa" trong bảng 2
+
+    // Nâng cao tuần 7: hai trung điểm nhưng số vẫn nhỏ (PQ ≤ 16)
     if (level === "advanced" && Math.random() < 0.5) {
-      var ab = pick([40, 60, 80, 100, 120]);
+      var half = rand(4, 8); // MQ
+      var pq = half * 2; // 8–16
+      var mn = half / 2; // 2–4, luôn chẵn half
+      if (half % 2 !== 0) half = pick([4, 6, 8]);
+      pq = half * 2;
+      mn = half / 2;
       return q({
         topicId: tid(week),
         level: level,
         week: week,
         text:
           "PQ = " +
-          ab +
+          pq +
           " cm. M trung điểm PQ, N trung điểm MQ. Độ dài MN là:",
         type: "mc",
-        options: numMc(ab / 4, 8),
-        answer: ab / 4,
+        options: numMc(mn, 3),
+        answer: mn,
         explainSteps: [
-          "M giữa P và Q → MQ = " + ab + " : 2 = " + ab / 2 + " cm.",
-          "N giữa M và Q → MN = MQ : 2 = " + ab / 4 + " cm.",
+          "M giữa P và Q → MQ = một nửa PQ = " + half + " cm (vì " + half + " + " + half + " = " + pq + ").",
+          "N giữa M và Q → MN = một nửa MQ = " + mn + " cm (vì " + mn + " + " + mn + " = " + half + ").",
         ],
-        explainTip: "Trung điểm chia đoạn thành 2 phần bằng nhau.",
+        explainTip: "Trung điểm = chia đôi đoạn (một nửa + một nửa).",
       });
     }
-    var len = pick([8, 10, 12, 16, 20, 24, 30]);
+
+    // Cơ bản: cho AM tìm AB hoặc cho AB tìm AM
+    if (Math.random() < 0.4) {
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text:
+          "M là trung điểm AB. AM = " +
+          am +
+          " cm. Độ dài AB là:",
+        type: "mc",
+        options: numMc(len, 4),
+        answer: len,
+        explainSteps: [
+          "Trung điểm → AM = MB.",
+          "AB = AM + MB = " + am + " + " + am + " = " + len + " cm.",
+        ],
+        explainTip: "Biết một nửa → đoạn cả = cộng hai nửa (hoặc × 2).",
+      });
+    }
+
     return q({
       topicId: tid(week),
       level: level,
@@ -1563,12 +1606,13 @@
         len +
         " cm. M là trung điểm. Độ dài AM là:",
       type: "mc",
-      options: numMc(len / 2, 5),
-      answer: len / 2,
+      options: numMc(am, 3),
+      answer: am,
       explainSteps: [
         "Trung điểm chia đoạn thẳng thành 2 phần bằng nhau.",
-        "AM = AB : 2 = " + len + " : 2 = " + len / 2 + " cm.",
+        "AM = MB và AM + MB = " + len + " → AM = " + am + " cm (vì " + am + " + " + am + " = " + len + ").",
       ],
+      explainTip: "Tìm một nửa: nghĩ số nào cộng với chính nó ra độ dài cả đoạn.",
     });
   }
 
