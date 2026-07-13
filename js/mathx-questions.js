@@ -1509,10 +1509,18 @@
     if (level === "advanced" && d >= 3 && Math.random() < 0.45) {
       var n = rand(2, Math.min(3, d - 1));
       var ans = unit * n;
-      // giữ ans vừa phải
-      if (ans > 27) {
+      // Tuần 7–9: kết quả vẫn 1 chữ số (≤ 9)
+      if (ans > 9) {
+        unit = rand(2, 4);
+        total = d * unit;
         n = 2;
         ans = unit * n;
+        if (ans > 9) {
+          unit = 2;
+          total = d * unit;
+          ans = 4;
+          n = 2;
+        }
       }
       return q({
         topicId: tid(week),
