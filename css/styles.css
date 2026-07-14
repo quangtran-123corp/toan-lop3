@@ -656,22 +656,34 @@ body {
   margin-bottom: 14px;
 }
 
-/* Hình minh họa hình học */
+/* Hình minh họa — căn giữa, dễ xem trên iPad/điện thoại; không che đáp án */
 .q-visual {
-  margin: 0 0 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 4px auto 18px;
   width: 100%;
+  max-width: 440px;
+  padding: 0 4px;
 }
 
 .q-visual[hidden] {
   display: none !important;
 }
 
+.q-visual > .geo-fig,
+.q-visual > .geo-fig-pair {
+  width: 100%;
+}
+
 .geo-fig {
-  background: linear-gradient(180deg, #F8FAFC 0%, #EEF2FF 100%);
-  border: 2px solid #E0E7FF;
-  border-radius: 16px;
-  padding: 10px;
+  background: linear-gradient(180deg, #FFFFFF 0%, #EEF2FF 100%);
+  border: 2px solid #C7D2FE;
+  border-radius: 18px;
+  padding: 12px 10px 14px;
   overflow: visible;
+  box-shadow: 0 6px 18px rgba(79, 70, 229, 0.08);
 }
 
 .geo-fig svg {
@@ -679,7 +691,7 @@ body {
   width: 100%;
   max-width: 100%;
   height: auto;
-  max-height: 280px;
+  max-height: min(52vh, 340px);
   margin: 0 auto;
   overflow: visible;
 }
@@ -690,17 +702,28 @@ body {
 }
 
 .geo-fig.mini svg {
-  max-height: 150px;
+  max-height: 160px;
 }
 
 .geo-fig-pair {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: stretch;
+  width: 100%;
 }
 
 .geo-fig-pair .geo-fig {
   flex: 1;
+}
+
+/* iPad / màn rộng: hình to hơn một chút */
+@media (min-width: 700px) {
+  .q-visual {
+    max-width: 480px;
+  }
+  .geo-fig svg {
+    max-height: min(48vh, 380px);
+  }
 }
 
 .mc-grid {

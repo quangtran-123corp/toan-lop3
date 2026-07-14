@@ -45,8 +45,43 @@
       explainSteps: p.explainSteps || null,
       explainTip: p.explainTip || null,
       visual: p.visual || null,
+      visualAfter: p.visualAfter || null,
       week: p.week || 0,
     };
+  }
+
+  /** Gọi an toàn hàm vẽ SVG global (từ questions.js) — không crash nếu thiếu */
+  function V(name) {
+    var args = Array.prototype.slice.call(arguments, 1);
+    try {
+      if (typeof global !== "undefined" && typeof global[name] === "function") {
+        return global[name].apply(null, args);
+      }
+      // Classic script: functions live on window / self
+      var root =
+        typeof window !== "undefined"
+          ? window
+          : typeof self !== "undefined"
+            ? self
+            : null;
+      if (root && typeof root[name] === "function") {
+        return root[name].apply(null, args);
+      }
+      // bare global (browser non-module)
+      if (typeof eval === "function") {
+        /* prefer direct name if in scope of outer scripts — handled below */
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    // Fallback: try bare identifier via Function (works when geo* are globals)
+    try {
+      var fn = new Function("return typeof " + name + "==='function'?" + name + ":null")();
+      if (fn) return fn.apply(null, args);
+    } catch (e2) {
+      /* ignore */
+    }
+    return null;
   }
   function tid(week) {
     return "mathx-t" + week;
@@ -1532,6 +1567,7 @@
       unit = rand(2, 6);
       total = d * unit;
     }
+    var strip = V("geoFractionStrip", d, 1); // tô 1 phần — không ghi đáp án số
     if (level === "advanced" && d >= 3 && Math.random() < 0.45) {
       var n = rand(2, Math.min(3, d - 1));
       var ans = unit * n;
@@ -1555,6 +1591,7 @@
         text: n + "/" + d + " của " + total + " bằng bao nhiêu?",
         type: "input",
         answer: ans,
+        visual: V("geoFractionStrip", d, n),
         explainSteps: [
           "Một phần " + d + " của " + total + " = " + total + " : " + d + " = " + unit + " (nhớ bảng nhân " + d + ").",
           n + " phần = " + unit + " × " + n + " = " + ans + ".",
@@ -1570,6 +1607,7 @@
       type: "mc",
       options: numMc(unit, 3),
       answer: unit,
+      visual: strip,
       explainSteps: [
         "Chia đều " + total + " thành " + d + " phần bằng nhau.",
         "Nhớ: " + d + " × " + unit + " = " + total + " → " + total + " : " + d + " = " + unit + ".",
@@ -1602,6 +1640,7 @@
         type: "mc",
         options: numMc(mn, 3),
         answer: mn,
+        visual: V("geoSegment", "P", "Q", "M", pq + " cm", null),
         explainSteps: [
           "M giữa P và Q → MQ = một nửa PQ = " + half + " cm (vì " + half + " + " + half + " = " + pq + ").",
           "N giữa M và Q → MN = một nửa MQ = " + mn + " cm (vì " + mn + " + " + mn + " = " + half + ").",
@@ -1623,6 +1662,9 @@
         type: "mc",
         options: numMc(len, 4),
         answer: len,
+        // Chỉ gắn nhãn nửa đã cho — không viết đáp án AB trên hình
+        visual: V("geoMidpointFig", { given: "half", halfLabel: am + " cm" }),
+        visualAfter: V("geoSegment", "A", "B", "M", len + " cm", am + " cm"),
         explainSteps: [
           "Trung điểm → AM = MB.",
           "AB = AM + MB = " + am + " + " + am + " = " + len + " cm.",
@@ -1642,6 +1684,9 @@
       type: "mc",
       options: numMc(am, 3),
       answer: am,
+      // Chỉ gắn nhãn cả đoạn — không viết AM trên hình trước khi trả lời
+      visual: V("geoMidpointFig", { given: "full", fullLabel: len + " cm" }),
+      visualAfter: V("geoSegment", "A", "B", "M", len + " cm", am + " cm"),
       explainSteps: [
         "Trung điểm chia đoạn thẳng thành 2 phần bằng nhau.",
         "AM = MB và AM + MB = " + len + " → AM = " + am + " cm (vì " + am + " + " + am + " = " + len + ").",
@@ -1655,7 +1700,48 @@
     // Chỉ dùng bảng nhân/chia 2: bán kính 2–9 → đường kính 4–18.
     // Từ tuần 10 trở đi mới cho số lớn hơn (ôn / nâng cao).
     var early = !week || week < 10;
-    if (Math.random() < 0.5) {
+    var mode = pick(["r2d", "d2r", "countR", "fact"]);
+    if (mode === "countR") {
+      var nR = pick([3, 4, 5, 6]);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Hình tròn bên có bao nhiêu bán kính?",
+        type: "mc",
+        options: numMc(nR, 2),
+        answer: nR,
+        // Không ghi số n trên hình
+        visual: V("geoCircleRadiiCount", nR),
+        explainSteps: [
+          "Bán kính là đoạn thẳng nối tâm với một điểm trên đường tròn.",
+          "Đếm các đoạn từ tâm ra viền: có " + nR + " bán kính.",
+        ],
+        explainTip: "Mỗi tia từ tâm chạm viền = 1 bán kính.",
+      });
+    }
+    if (mode === "fact") {
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Trên một hình tròn, đường kính so với bán kính thì:",
+        type: "mc",
+        options: [
+          "Đường kính gấp đôi bán kính",
+          "Đường kính nhỏ hơn bán kính",
+          "Đường kính bằng bán kính",
+          "Chỉ kẻ được 1 đường kính",
+        ],
+        answer: "Đường kính gấp đôi bán kính",
+        visual: V("geoCircle", true, true, "r", "d = 2r"),
+        explainSteps: [
+          "Đường kính đi qua tâm, nối hai điểm trên đường tròn.",
+          "Đường kính = 2 × bán kính.",
+        ],
+      });
+    }
+    if (mode === "r2d" || Math.random() < 0.5) {
       var r = early
         ? rand(2, 9)
         : level === "advanced"
@@ -1669,6 +1755,15 @@
         type: "mc",
         options: numMc(r * 2, early ? 4 : 6),
         answer: r * 2,
+        // Chỉ hiện bán kính đã cho — không ghi đáp án đường kính
+        visual: V("geoCircleRadiusOnly", "r = " + r + " cm"),
+        visualAfter: V(
+          "geoCircle",
+          true,
+          true,
+          "r = " + r + " cm",
+          "d = " + r * 2 + " cm"
+        ),
         explainSteps: [
           "Đường kính = 2 × bán kính.",
           "2 × " + r + " = " + r * 2 + " cm" + (early ? " (bảng nhân 2)." : "."),
@@ -1689,6 +1784,14 @@
       type: "mc",
       options: numMc(d / 2, early ? 3 : 4),
       answer: d / 2,
+      visual: V("geoCircleDiameterOnly", "d = " + d + " cm"),
+      visualAfter: V(
+        "geoCircle",
+        true,
+        true,
+        "r = " + d / 2 + " cm",
+        "d = " + d + " cm"
+      ),
       explainSteps: [
         "Bán kính = đường kính : 2.",
         d + " : 2 = " + d / 2 + " cm" + (early ? " (bảng chia 2)." : "."),
@@ -1698,17 +1801,61 @@
   }
 
   function genGoc(week, level) {
-    if (level === "advanced" && Math.random() < 0.5) {
+    var mode = pick(["measure90", "pickRight", "countRight", "compare"]);
+    if (mode === "pickRight") {
+      var rightIdx = rand(0, 2);
+      var ansLetter = ["a", "b", "c"][rightIdx];
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Góc nào dưới đây là góc vuông?",
+        type: "mc",
+        options: ["a", "b", "c"],
+        answer: ansLetter,
+        // Không ghi số đo / nhãn "góc vuông" — chỉ dấu vuông nhỏ ở góc 90°
+        visual: V("geoThreeAnglesPick", rightIdx),
+        explainSteps: [
+          "Góc vuông có dấu hình vuông nhỏ ở đỉnh góc (hoặc hai cạnh vuông góc).",
+          "Đáp án đúng: " + ansLetter + ".",
+        ],
+        explainTip: "Góc vuông = 90°. Góc nhọn < 90°, góc tù > 90°.",
+      });
+    }
+    if (mode === "countRight") {
+      var kinds = ["trap2", "rect4", "trap1", "L2", "tri0"];
+      var kind = pick(kinds);
+      var fig = V("geoCountRightAnglesFig", kind);
+      var nRight = fig && fig.rightAngles != null ? fig.rightAngles : 2;
+      var vis = fig && fig.visual ? fig.visual : null;
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Hình dưới đây có bao nhiêu góc vuông?",
+        type: "mc",
+        options: numMc(nRight, 2),
+        answer: nRight,
+        visual: vis,
+        explainSteps: [
+          "Góc vuông: hai cạnh tạo thành hình chữ L (dấu vuông).",
+          "Đếm các góc vuông trên hình: " + nRight + ".",
+        ],
+      });
+    }
+    if (mode === "compare" || (level === "advanced" && Math.random() < 0.5)) {
       var deg = pick([30, 45, 60, 90, 120, 150]);
       var cmp = deg > 90 ? "lớn hơn" : deg < 90 ? "bé hơn" : "bằng";
       return q({
         topicId: tid(week),
         level: level,
         week: week,
-        text: "Góc " + deg + "° so với góc vuông thì thế nào?",
+        text: "Góc trong hình so với góc vuông thì thế nào?",
         type: "mc",
         options: ["lớn hơn", "bé hơn", "bằng", "không so sánh được"],
         answer: cmp,
+        // Hiện số đo trên hình vì đề hỏi so sánh (không phải hỏi số đo)
+        visual: V("geoAngle", deg, { showMeasure: true, showKind: false }),
         explain: deg + "° " + cmp + " 90° (góc vuông).",
       });
     }
@@ -1720,28 +1867,29 @@
       type: "mc",
       options: ["45", "60", "90", "180"],
       answer: "90",
+      // Hiện dấu vuông, ẨN số đo — không lộ đáp án 90°
+      visual: V("geoAngle", 90, { showMeasure: false, showKind: true }),
+      visualAfter: V("geoAngle", 90, { showMeasure: true, showKind: true }),
       explainSteps: ["Góc vuông có số đo 90°.", "Dấu góc vuông là hình vuông nhỏ ở đỉnh góc."],
     });
   }
 
   function genHinhPhangKhoi(week, level) {
-    // Tuần 4 & 9: nhận biết hình phẳng / khối (KNTT).
-    // CẤM dạng "HCN dài 24, gấp 2 lần rộng → 24:2" trước khi học:
-    //   T10 gấp lần / nhân 2 chữ số, T11 chia 2 chữ số.
-    // week < 11: không gấp-ngược, không chia tìm cạnh.
-    // week < 10: không dùng từ "gấp … lần" (chưa học bài đó).
-    var beforeGapLan = !week || week < 10; // trước T10
-    var beforeChia2 = !week || week < 11; // trước T11
+    // Tuần 4 & 9: nhận biết hình phẳng / khối (KNTT) — ưu tiên câu có hình MathX.
+    // CẤM dạng "HCN dài 24, gấp 2 lần rộng → 24:2" trước T10/T11.
+    var beforeGapLan = !week || week < 10;
+    var beforeChia2 = !week || week < 11;
     var bank = [
       function () {
         return q({
           topicId: tid(week),
           level: level,
           week: week,
-          text: "Hình tam giác có bao nhiêu cạnh và đỉnh?",
+          text: "Hình dưới đây là hình gì? Có bao nhiêu cạnh và đỉnh?",
           type: "mc",
-          options: ["3 cạnh, 3 đỉnh", "4 cạnh, 4 đỉnh", "3 cạnh, 4 đỉnh", "4 cạnh, 3 đỉnh"],
-          answer: "3 cạnh, 3 đỉnh",
+          options: ["Tam giác: 3 cạnh, 3 đỉnh", "Tứ giác: 4 cạnh, 4 đỉnh", "Tam giác: 4 cạnh", "Tứ giác: 3 đỉnh"],
+          answer: "Tam giác: 3 cạnh, 3 đỉnh",
+          visual: V("geoTriangle"),
           explain: "Tam giác: 3 cạnh, 3 đỉnh.",
         });
       },
@@ -1754,7 +1902,88 @@
           type: "mc",
           options: ["3", "4", "5", "6"],
           answer: "4",
+          visual: V("geoRect", true, null, null),
           explain: "Tứ giác: 4 cạnh, 4 đỉnh.",
+        });
+      },
+      function () {
+        // MathX: chọn hình tam giác trong a/b/c
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Trong các hình sau, hình nào là hình tam giác?",
+          type: "mc",
+          options: ["a", "b", "c"],
+          answer: "c",
+          visual: V("geoPickShapesRow", [
+            { kind: "trap", label: "a" },
+            { kind: "rect", label: "b" },
+            { kind: "triangle", label: "c" },
+          ]),
+          explainSteps: [
+            "Hình tam giác có 3 cạnh, 3 đỉnh.",
+            "Hình c có 3 cạnh → là hình tam giác.",
+          ],
+        });
+      },
+      function () {
+        // MathX: chọn hình chữ nhật
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Hình nào dưới đây là hình chữ nhật (không phải hình vuông)?",
+          type: "mc",
+          options: ["a", "b", "c", "d"],
+          answer: "a",
+          visual: V("geoPickShapesRow", [
+            { kind: "rect", label: "a" },
+            { kind: "square", label: "b" },
+            { kind: "diamond", label: "c" },
+            { kind: "triangle", label: "d" },
+          ]),
+          explainSteps: [
+            "Hình chữ nhật: 4 góc vuông, chiều dài khác chiều rộng.",
+            "Hình a là hình chữ nhật. Hình b là hình vuông (trường hợp đặc biệt).",
+          ],
+        });
+      },
+      function () {
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Hình nào dưới đây là hình vuông?",
+          type: "mc",
+          options: ["a", "b", "c", "d"],
+          answer: "b",
+          visual: V("geoPickShapesRow", [
+            { kind: "rect", label: "a" },
+            { kind: "square", label: "b" },
+            { kind: "diamond", label: "c" },
+            { kind: "triangle", label: "d" },
+          ]),
+          explain: "Hình vuông: 4 cạnh bằng nhau và 4 góc vuông → hình b.",
+        });
+      },
+      function () {
+        var cols = pick([2, 3]);
+        var rows = pick([2, 3]);
+        var nSq = cols * rows;
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Hình dưới đây có bao nhiêu hình vuông nhỏ?",
+          type: "mc",
+          options: numMc(nSq, 3),
+          answer: nSq,
+          visual: V("geoSquareGrid", cols, rows),
+          explainSteps: [
+            "Đếm theo hàng × cột (hoặc đếm từng ô).",
+            rows + " hàng × " + cols + " cột = " + nSq + " hình vuông nhỏ.",
+          ],
         });
       },
       function () {
@@ -1766,6 +1995,7 @@
           type: "mc",
           options: ["2", "3", "4", "5"],
           answer: "4",
+          visual: V("geoRect", true, null, null),
           explain: "Hình chữ nhật có 4 góc vuông.",
         });
       },
@@ -1783,9 +2013,11 @@
             "Hình chữ nhật không có góc vuông",
           ],
           answer: "Hình vuông có 4 cạnh bằng nhau",
+          visual: V("geoShapeGallery", null),
+          visualAfter: V("geoShapeGallery", "Hình vuông"),
           explainSteps: [
             "Cả hai đều có 4 góc vuông.",
-            "Hình vuông: 4 cạnh bằng nhau. Hình chữ nhật: chiều dài và chiều rộng có thể khác nhau.",
+            "Hình vuông: 4 cạnh bằng nhau. Hình chữ nhật: dài và rộng có thể khác nhau.",
           ],
         });
       },
@@ -1798,6 +2030,7 @@
           type: "mc",
           options: numMc(8, 3),
           answer: 8,
+          visual: V("geoCubeFig"),
           explain: "Lập phương: 8 đỉnh, 12 cạnh, 6 mặt vuông.",
         });
       },
@@ -1810,6 +2043,7 @@
           type: "mc",
           options: ["6", "8", "12", "4"],
           answer: "12",
+          visual: V("geoCubeFig"),
           explain: "Lập phương: 12 cạnh bằng nhau, 8 đỉnh, 6 mặt vuông.",
         });
       },
@@ -1822,6 +2056,7 @@
           type: "mc",
           options: ["Hình chữ nhật", "Hình tròn", "Hình tam giác", "Hình thoi"],
           answer: "Hình chữ nhật",
+          visual: V("geoPrismFig"),
           explain: "6 mặt đều là hình chữ nhật.",
         });
       },
@@ -1839,10 +2074,10 @@
             "8 mặt hình chữ nhật",
           ],
           answer: "6 mặt hình vuông",
+          visual: V("geoCubeFig"),
           explain: "Lập phương: 6 mặt vuông bằng nhau.",
         });
       },
-      // Luôn an toàn: cho sẵn dài + rộng, chỉ cộng (không chia, không gấp ngược)
       function () {
         var L = rand(5, 12);
         var w = rand(2, Math.min(9, L - 1));
@@ -1859,6 +2094,8 @@
           type: "mc",
           options: numMc(L + w, 4),
           answer: L + w,
+          // Gắn nhãn đã cho — không ghi tổng trên hình
+          visual: V("geoRect", true, L + " cm", w + " cm"),
           explainSteps: [
             "Đề đã cho cả chiều dài và chiều rộng.",
             "Tổng = " + L + " + " + w + " = " + (L + w) + " cm.",
@@ -1868,7 +2105,6 @@
       },
     ];
 
-    // T10+: gấp lần theo chiều thuận (rộng → dài = nhân bảng)
     if (!beforeGapLan) {
       bank.push(function () {
         var w = rand(2, 9);
@@ -1887,6 +2123,8 @@
           type: "mc",
           options: numMc(L, 5),
           answer: L,
+          visual: V("geoRect", true, null, w + " cm"),
+          visualAfter: V("geoRect", true, L + " cm", w + " cm"),
           explainSteps: [
             "Dài gấp " + k + " lần rộng → nhân (bảng nhân " + k + ").",
             "Dài = " + w + " × " + k + " = " + L + " cm.",
@@ -1896,7 +2134,6 @@
       });
     }
 
-    // T11+: mới được chia để tìm rộng (gấp ngược)
     if (!beforeChia2) {
       bank.push(function () {
         var w = level === "advanced" ? rand(4, 12) : rand(3, 9);
@@ -1915,6 +2152,8 @@
           type: level === "advanced" ? "input" : "mc",
           options: numMc(L + w, 6),
           answer: L + w,
+          visual: V("geoRect", true, L + " cm", null),
+          visualAfter: V("geoRect", true, L + " cm", w + " cm"),
           explainSteps: [
             "Rộng = " + L + " : " + k + " = " + w + " cm.",
             "Tổng = " + L + " + " + w + " = " + (L + w) + " cm.",

@@ -222,9 +222,15 @@ function renderQuestion() {
   $("#q-text").textContent = item.text;
 
   const visual = $("#q-visual");
-  if (item.visual) {
+  if (item.visual && typeof item.visual === "string") {
     visual.hidden = false;
     visual.innerHTML = item.visual;
+    // Đưa hình vào tầm nhìn (iPad/điện thoại)
+    try {
+      visual.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    } catch (e) {
+      /* ignore */
+    }
   } else {
     visual.hidden = true;
     visual.innerHTML = "";

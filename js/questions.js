@@ -1143,6 +1143,355 @@ function geoCountDotsOnShape(kind) {
   };
 }
 
+/* ========== SVG bổ sung kiểu MathX (không lộ đáp án trên hình) ========== */
+
+/** Hình tròn với n bán kính (không ghi số) — hỏi đếm bán kính */
+function geoCircleRadiiCount(n) {
+  n = Math.max(2, Math.min(6, Number(n) || 4));
+  var cx = 140;
+  var cy = 88;
+  var r = 62;
+  var parts =
+    '<circle cx="' +
+    cx +
+    '" cy="' +
+    cy +
+    '" r="' +
+    r +
+    '" fill="#FEF9C3" stroke="#1E293B" stroke-width="3"/>' +
+    '<circle cx="' +
+    cx +
+    '" cy="' +
+    cy +
+    '" r="5" fill="#DC2626"/>';
+  // n bán kính: phân bố góc (tránh chồng lên nhau)
+  for (var i = 0; i < n; i++) {
+    var ang = (-90 + (i * 360) / n) * (Math.PI / 180);
+    // nếu n lẻ, xoay nhẹ để dễ nhìn
+    if (n === 5) ang = (-90 + i * 72) * (Math.PI / 180);
+    if (n === 3) ang = (-90 + i * 120) * (Math.PI / 180);
+    if (n === 4) ang = (i * 90) * (Math.PI / 180); // + / trục
+    if (n === 6) ang = (i * 60) * (Math.PI / 180);
+    var x2 = cx + r * Math.cos(ang);
+    var y2 = cy + r * Math.sin(ang);
+    parts +=
+      '<line x1="' +
+      cx +
+      '" y1="' +
+      cy +
+      '" x2="' +
+      x2 +
+      '" y2="' +
+      y2 +
+      '" stroke="#1E293B" stroke-width="2.5"/>';
+  }
+  // Không ghi số n trên hình
+  return svgWrap(parts, 280, 190);
+}
+
+/** Hình tròn chỉ vẽ bán kính OA (không ghi độ dài đáp án) */
+function geoCircleRadiusOnly(rLabel) {
+  // rLabel chỉ hiện giá trị ĐÃ CHO (vd r = 5 cm). Không hiện đường kính.
+  return geoCircle(true, false, rLabel || "bán kính", null);
+}
+
+/** Hình tròn chỉ vẽ đường kính AB (không ghi bán kính) */
+function geoCircleDiameterOnly(dLabel) {
+  return geoCircle(false, true, null, dLabel || "đường kính AB");
+}
+
+/**
+ * Đa giác đếm góc vuông (MathX tuần 8).
+ * kind: "trap2" | "house3" | "rect4" | "trap1" | "L2"
+ * Trả { visual, rightAngles }
+ * Không vẽ dấu vuông / số — bé tự nhận biết.
+ */
+function geoCountRightAnglesFig(kind) {
+  var map = {
+    trap2: {
+      // hình thang vuông (2 góc vuông)
+      d: "M40,40 H160 L220,140 H40 Z",
+      fill: "#BBF7D0",
+      ans: 2,
+    },
+    house3: {
+      // hình nhà: 3 góc vuông dưới
+      d: "M50,70 L140,20 L230,70 V150 H50 Z",
+      fill: "#FDE68A",
+      ans: 2,
+    },
+    rect4: {
+      d: "M50,40 H230 V140 H50 Z",
+      fill: "#BFDBFE",
+      ans: 4,
+    },
+    trap1: {
+      d: "M50,50 H180 L230,140 H50 Z",
+      fill: "#FDE047",
+      ans: 1,
+    },
+    L2: {
+      // chữ L: 6 góc ngoài? đếm góc vuông trong đa giác: 6 đỉnh, 4 góc vuông điển hình
+      d: "M60,30 H140 V90 H200 V150 H60 Z",
+      fill: "#FBCFE8",
+      ans: 4,
+    },
+    tri0: {
+      d: "M140,30 L50,150 H230 Z",
+      fill: "#A7F3D0",
+      ans: 0,
+    },
+  };
+  var info = map[kind] || map.trap2;
+  var inner =
+    '<path d="' +
+    info.d +
+    '" fill="' +
+    info.fill +
+    '" stroke="#0F172A" stroke-width="3" stroke-linejoin="round"/>';
+  return {
+    visual: svgWrap(inner, 280, 180),
+    rightAngles: info.ans,
+  };
+}
+
+/**
+ * Ba góc a) b) c) — chỉ 1 góc vuông (rightIdx 0..2).
+ * Không ghi số đo, không nhãn "góc vuông".
+ */
+function geoThreeAnglesPick(rightIdx) {
+  rightIdx = rightIdx == null ? 0 : rightIdx;
+  var degs = [45, 90, 120];
+  // đặt góc vuông đúng vị trí rightIdx
+  var ordered = [45, 120, 60];
+  ordered[rightIdx] = 90;
+  if (rightIdx !== 0) ordered[0] = 45;
+  if (rightIdx !== 1) ordered[1] = rightIdx === 0 ? 50 : 50;
+  if (rightIdx !== 2) ordered[2] = 130;
+  // rebuild cleanly
+  var pool = [50, 130, 35];
+  ordered = [];
+  var pi = 0;
+  for (var i = 0; i < 3; i++) {
+    if (i === rightIdx) ordered.push(90);
+    else ordered.push(pool[pi++]);
+  }
+  var labels = ["a", "b", "c"];
+  var g = "";
+  var cellW = 100;
+  for (var j = 0; j < 3; j++) {
+    var deg = ordered[j];
+    var ox = 20 + j * cellW;
+    var oy = 100;
+    var len = 55;
+    var rad = (deg * Math.PI) / 180;
+    var x2 = ox + len;
+    var y2 = oy;
+    var x3 = ox + len * Math.cos(rad);
+    var y3 = oy - len * Math.sin(rad);
+    // Không vẽ dấu vuông / số đo — bé nhìn độ mở của góc (kiểu MathX)
+    var arc =
+      '<path d="M' +
+      (ox + 16) +
+      " " +
+      oy +
+      " A16 16 0 0 0 " +
+      (ox + 16 * Math.cos(rad)) +
+      " " +
+      (oy - 16 * Math.sin(rad)) +
+      '" fill="none" stroke="#94A3B8" stroke-width="2"/>';
+    g +=
+      "<g>" +
+      '<line x1="' +
+      ox +
+      '" y1="' +
+      oy +
+      '" x2="' +
+      x2 +
+      '" y2="' +
+      y2 +
+      '" stroke="#334155" stroke-width="3" stroke-linecap="round"/>' +
+      '<line x1="' +
+      ox +
+      '" y1="' +
+      oy +
+      '" x2="' +
+      x3 +
+      '" y2="' +
+      y3 +
+      '" stroke="#334155" stroke-width="3" stroke-linecap="round"/>' +
+      arc +
+      '<text x="' +
+      (ox + 28) +
+      '" y="150" text-anchor="middle" font-size="16" font-weight="900" fill="#4F46E5" font-family="Nunito,sans-serif">' +
+      labels[j] +
+      ")</text></g>";
+  }
+  return svgWrap(g, 320, 170);
+}
+
+/** Hàng hình a/b/c chọn đúng loại — labels + shapes, không highlight đáp án */
+function geoPickShapesRow(shapes) {
+  // shapes: [{kind:'triangle'|'rect'|'square'|'trap'|'diamond', label:'a'}]
+  var g = "";
+  var n = shapes.length;
+  var cellW = Math.floor(300 / n);
+  for (var i = 0; i < n; i++) {
+    var s = shapes[i];
+    var cx = cellW * i + cellW / 2;
+    var cy = 70;
+    var draw = "";
+    if (s.kind === "triangle") {
+      draw =
+        '<polygon points="' +
+        cx +
+        ",30 " +
+        (cx - 36) +
+        ",110 " +
+        (cx + 36) +
+        ',110" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+    } else if (s.kind === "square") {
+      draw =
+        '<rect x="' +
+        (cx - 32) +
+        '" y="40" width="64" height="64" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+    } else if (s.kind === "rect") {
+      draw =
+        '<rect x="' +
+        (cx - 42) +
+        '" y="48" width="84" height="52" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+    } else if (s.kind === "trap") {
+      draw =
+        '<polygon points="' +
+        (cx - 28) +
+        ",40 " +
+        (cx + 28) +
+        ",40 " +
+        (cx + 42) +
+        ",110 " +
+        (cx - 42) +
+        ',110" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+    } else if (s.kind === "diamond") {
+      draw =
+        '<polygon points="' +
+        cx +
+        ",30 " +
+        (cx + 40) +
+        ",72 " +
+        cx +
+        ",114 " +
+        (cx - 40) +
+        ',72" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+    } else {
+      draw =
+        '<polygon points="' +
+        (cx - 36) +
+        ",110 " +
+        cx +
+        ",40 " +
+        (cx + 36) +
+        ',110" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+    }
+    g +=
+      draw +
+      '<text x="' +
+      cx +
+      '" y="145" text-anchor="middle" font-size="15" font-weight="900" fill="#4F46E5" font-family="Nunito,sans-serif">' +
+      (s.label || String.fromCharCode(97 + i)) +
+      ")</text>";
+  }
+  return svgWrap(g, 300, 165);
+}
+
+/** Lưới m×n ô vuông nhỏ — hỏi đếm (không ghi đáp án) */
+function geoSquareGrid(cols, rows) {
+  cols = cols || 3;
+  rows = rows || 2;
+  var cell = 36;
+  var pad = 40;
+  var w = pad * 2 + cols * cell;
+  var h = pad * 2 + rows * cell + 10;
+  var g = "";
+  for (var r = 0; r < rows; r++) {
+    for (var c = 0; c < cols; c++) {
+      g +=
+        '<rect x="' +
+        (pad + c * cell) +
+        '" y="' +
+        (pad + r * cell) +
+        '" width="' +
+        cell +
+        '" height="' +
+        cell +
+        '" fill="#FFF" stroke="#0F172A" stroke-width="2"/>';
+    }
+  }
+  return svgWrap(g, Math.max(w, 200), h);
+}
+
+/** Khối lập phương / hộp chữ nhật (wireframe) — không ghi số mặt/đỉnh */
+function geoCubeFig() {
+  // isometric-ish cube
+  var g =
+    // back face hint
+    '<path d="M90,50 L170,50 L210,90 L210,160 L130,160 L90,120 Z" fill="#E0E7FF" stroke="#4F46E5" stroke-width="2.5" stroke-linejoin="round"/>' +
+    '<path d="M90,50 L130,90 L210,90" fill="none" stroke="#4F46E5" stroke-width="2"/>' +
+    '<path d="M130,90 L130,160" fill="none" stroke="#4F46E5" stroke-width="2"/>' +
+    '<text x="150" y="185" text-anchor="middle" font-size="13" font-weight="800" fill="#64748B" font-family="Nunito,sans-serif">Khối lập phương</text>';
+  return svgWrap(g, 280, 200);
+}
+
+function geoPrismFig() {
+  var g =
+    '<path d="M60,70 L160,70 L210,110 L210,165 L110,165 L60,125 Z" fill="#FCE7F3" stroke="#DB2777" stroke-width="2.5" stroke-linejoin="round"/>' +
+    '<path d="M60,70 L110,110 L210,110" fill="none" stroke="#DB2777" stroke-width="2"/>' +
+    '<path d="M110,110 L110,165" fill="none" stroke="#DB2777" stroke-width="2"/>' +
+    '<text x="140" y="190" text-anchor="middle" font-size="13" font-weight="800" fill="#64748B" font-family="Nunito,sans-serif">Khối hộp chữ nhật</text>';
+  return svgWrap(g, 280, 210);
+}
+
+/**
+ * Thanh phân số: totalParts ô, coloredParts tô màu.
+ * Không ghi số đáp án; chỉ minh họa "một phần mấy".
+ */
+function geoFractionStrip(totalParts, coloredParts) {
+  totalParts = Math.max(2, Math.min(8, totalParts || 4));
+  coloredParts = Math.max(0, Math.min(totalParts, coloredParts == null ? 1 : coloredParts));
+  var pad = 24;
+  var barW = 240;
+  var barH = 44;
+  var cellW = barW / totalParts;
+  var g =
+    '<text x="140" y="28" text-anchor="middle" font-size="13" font-weight="800" fill="#64748B" font-family="Nunito,sans-serif">Chia đều ' +
+    totalParts +
+    " phần</text>";
+  for (var i = 0; i < totalParts; i++) {
+    var fill = i < coloredParts ? "#A78BFA" : "#F8FAFC";
+    g +=
+      '<rect x="' +
+      (pad + i * cellW) +
+      '" y="40" width="' +
+      cellW +
+      '" height="' +
+      barH +
+      '" fill="' +
+      fill +
+      '" stroke="#4F46E5" stroke-width="2"/>';
+  }
+  return svgWrap(g, 280, 110);
+}
+
+/** Đoạn AB có trung điểm M — chỉ gắn nhãn cho phần đã cho (không lộ đáp án) */
+function geoMidpointFig(opts) {
+  opts = opts || {};
+  // opts.given: "half" | "full" | "none"
+  // opts.halfLabel / opts.fullLabel
+  var half = opts.given === "half" ? opts.halfLabel || null : null;
+  var full = opts.given === "full" ? opts.fullLabel || null : null;
+  // Nếu hỏi nửa: chỉ hiện full; nếu hỏi cả: chỉ hiện half
+  return geoSegment("A", "B", "M", full, half);
+}
+
 function genHinhHoc(level) {
   if (level === "basic") {
     var mode = pick([
