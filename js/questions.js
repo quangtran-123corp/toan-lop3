@@ -1433,32 +1433,30 @@ function geoPickShapesRow(shapes) {
         (cx - 48) +
         ',112" fill="#FEF9C3" stroke="#A16207" stroke-width="2.5"/>';
     } else if (s.kind === "diamond" || s.kind === "rhombus") {
-      // Hình thoi DẸT NGANG — đường chéo ngang >> dọc (không giống vuông xoay)
+      // Hình thoi RẤT DẸT + góc nhọn rõ — KHÔNG phải vuông xoay 45°
+      // (vuông xoay có đường chéo ngang ≈ dọc; thoi này ngang >> dọc)
       draw =
         '<polygon points="' +
         cx +
-        ",48 " +
-        (cx + 54) +
+        ",58 " +
+        (cx + 58) +
         ",78 " +
         cx +
-        ",108 " +
-        (cx - 54) +
-        ',78" fill="#FFE4E6" stroke="#BE123C" stroke-width="2.5"/>' +
-        // gợi ý: không có góc vuông (không vẽ dấu vuông)
-        '<text x="' +
-        cx +
-        '" y="36" text-anchor="middle" font-size="10" font-weight="800" fill="#BE123C" font-family="Nunito,sans-serif" opacity="0.0">.</text>';
+        ",98 " +
+        (cx - 58) +
+        ',78" fill="#FFE4E6" stroke="#BE123C" stroke-width="2.5"/>';
     } else if (s.kind === "para") {
       // Hình bình hành nghiêng rõ — cạnh dài nằm ngang, lệch trái-phải
+      // (không có góc vuông → không phải HCN)
       draw =
         '<polygon points="' +
-        (cx - 20) +
-        ",48 " +
-        (cx + 48) +
-        ",48 " +
-        (cx + 28) +
+        (cx - 14) +
+        ",50 " +
+        (cx + 52) +
+        ",50 " +
+        (cx + 34) +
         ",108 " +
-        (cx - 40) +
+        (cx - 32) +
         ',108" fill="#E0E7FF" stroke="#4338CA" stroke-width="2.5"/>';
     } else if (s.kind === "pentagon") {
       draw =
@@ -1499,20 +1497,46 @@ function geoPickShapesRow(shapes) {
   return svgWrap(g, 320, 168);
 }
 
-/** Xáo trộn vị trí đáp án đúng trong hàng hình a/b/c/d */
+/**
+ * Xáo trộn vị trí đáp án đúng trong hàng hình a/b/c/d.
+ *
+ * Quy tắc tránh nhầm (lớp 3):
+ * - Hỏi HCN (không phải vuông): KHÔNG dùng diamond/thoi xoay (dễ nhìn như vuông/HCN).
+ *   Distractor an toàn: square, triangle, trap, circle, para, right-tri.
+ * - Hỏi vuông: được dùng diamond dẹt + para + trap (khác rõ vuông đứng).
+ * - Hỏi thoi: không dùng square xoay; square phải đứng + dấu góc.
+ */
 function geoPickShapesQuiz(correctKind, distractorKinds) {
-  distractorKinds = distractorKinds || ["trap", "rect", "diamond", "para", "circle", "right-tri"];
+  // Bộ distractor mặc định an toàn theo loại câu
+  if (!distractorKinds || !distractorKinds.length) {
+    if (correctKind === "rect") {
+      // Không diamond: thoi xoay dễ bị chọn nhầm là HCN/vuông
+      distractorKinds = ["square", "triangle", "trap", "circle", "para", "right-tri"];
+    } else if (correctKind === "square") {
+      distractorKinds = ["rect", "triangle", "trap", "para", "circle", "right-tri"];
+      // thoi dẹt OK khi hỏi vuông (khác rõ vuông đứng có dấu góc)
+      distractorKinds.push("diamond");
+    } else if (correctKind === "diamond") {
+      distractorKinds = ["square", "rect", "triangle", "trap", "circle", "para"];
+    } else {
+      distractorKinds = ["trap", "rect", "para", "circle", "right-tri", "triangle"];
+    }
+  }
+  // Cứng: câu HCN tuyệt đối không lẫn diamond
+  if (correctKind === "rect") {
+    distractorKinds = distractorKinds.filter(function (k) {
+      return k !== "diamond" && k !== "rhombus";
+    });
+  }
+
   var opts = [correctKind];
-  var pool = distractorKinds.slice();
-  // loại bỏ kind trùng correct
-  pool = pool.filter(function (k) {
+  var pool = distractorKinds.slice().filter(function (k) {
     return k !== correctKind;
   });
   while (opts.length < 4 && pool.length) {
     var idx = Math.floor(Math.random() * pool.length);
     opts.push(pool.splice(idx, 1)[0]);
   }
-  // shuffle
   for (var i = opts.length - 1; i > 0; i--) {
     var j = Math.floor(Math.random() * (i + 1));
     var t = opts[i];

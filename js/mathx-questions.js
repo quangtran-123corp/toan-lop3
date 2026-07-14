@@ -1959,13 +1959,15 @@
         });
       },
       function () {
-        // HCN ≠ vuông; thoi dẹt + bình hành để tránh nhầm
+        // HCN ≠ vuông. KHÔNG dùng thoi/diamond (vuông xoay dễ bị chọn nhầm là HCN).
+        // Distractor: vuông đứng, tam giác, thang, tròn, bình hành nghiêng.
         var quiz = V("geoPickShapesQuiz", "rect", [
           "square",
-          "diamond",
-          "para",
           "triangle",
           "trap",
+          "circle",
+          "para",
+          "right-tri",
         ]);
         if (!quiz) {
           return q({
@@ -1983,15 +1985,16 @@
           topicId: tid(week),
           level: level,
           week: week,
-          text: "Hình nào là hình chữ nhật (dài khác rộng, có góc vuông)?",
+          text: "Hình nào là hình chữ nhật nhưng không phải hình vuông? (dài khác rộng, 4 góc vuông)",
           type: "mc",
           options: quiz.options,
           answer: quiz.answer,
           visual: quiz.visual,
           explainSteps: [
-            "Hình chữ nhật: 4 góc vuông, chiều dài khác chiều rộng.",
-            "Không chọn hình vuông (4 cạnh bằng) hay hình thoi dẹt (không có góc vuông).",
-            "Đáp án: " + quiz.answer + ".",
+            "Hình chữ nhật: 4 góc vuông và chiều dài khác chiều rộng.",
+            "Hình vuông cũng có 4 góc vuông nhưng 4 cạnh bằng nhau → không chọn.",
+            "Tam giác / hình thang / hình tròn / hình bình hành nghiêng không phải HCN.",
+            "Đáp án đúng: " + quiz.answer + ".",
           ],
         });
       },
