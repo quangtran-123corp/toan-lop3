@@ -1725,10 +1725,13 @@
   }
 
   function genHinhPhangKhoi(week, level) {
-    // Tuần 4 & 9: nhận biết hình phẳng / khối.
-    // Chưa học "gấp một số lên n lần" (T10) và chia số 2 chữ số (T11)
-    // → không ra dạng "dài 48, gấp 4 lần rộng → chia 48:4".
-    var early = !week || week < 10;
+    // Tuần 4 & 9: nhận biết hình phẳng / khối (KNTT).
+    // CẤM dạng "HCN dài 24, gấp 2 lần rộng → 24:2" trước khi học:
+    //   T10 gấp lần / nhân 2 chữ số, T11 chia 2 chữ số.
+    // week < 11: không gấp-ngược, không chia tìm cạnh.
+    // week < 10: không dùng từ "gấp … lần" (chưa học bài đó).
+    var beforeGapLan = !week || week < 10; // trước T10
+    var beforeChia2 = !week || week < 11; // trước T11
     var bank = [
       function () {
         return q({
@@ -1752,6 +1755,18 @@
           options: ["3", "4", "5", "6"],
           answer: "4",
           explain: "Tứ giác: 4 cạnh, 4 đỉnh.",
+        });
+      },
+      function () {
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Hình chữ nhật có bao nhiêu góc vuông?",
+          type: "mc",
+          options: ["2", "3", "4", "5"],
+          answer: "4",
+          explain: "Hình chữ nhật có 4 góc vuông.",
         });
       },
       function () {
@@ -1827,11 +1842,8 @@
           explain: "Lập phương: 6 mặt vuông bằng nhau.",
         });
       },
-    ];
-
-    if (early) {
-      // Chỉ cộng / bảng nhân đã học — không chia số 2 chữ số
-      bank.push(function () {
+      // Luôn an toàn: cho sẵn dài + rộng, chỉ cộng (không chia, không gấp ngược)
+      function () {
         var L = rand(5, 12);
         var w = rand(2, Math.min(9, L - 1));
         return q({
@@ -1851,14 +1863,17 @@
             "Đề đã cho cả chiều dài và chiều rộng.",
             "Tổng = " + L + " + " + w + " = " + (L + w) + " cm.",
           ],
-          explainTip: "Tuần 9: cộng hai số đã biết — chưa cần chia.",
+          explainTip: "Chỉ cộng hai số đã biết — không cần chia.",
         });
-      });
+      },
+    ];
+
+    // T10+: gấp lần theo chiều thuận (rộng → dài = nhân bảng)
+    if (!beforeGapLan) {
       bank.push(function () {
-        // Cho rộng + gấp k lần → tìm dài (nhân bảng 2–9)
         var w = rand(2, 9);
         var k = pick([2, 3, 4, 5]);
-        var L = w * k; // trong bảng nhân
+        var L = w * k;
         return q({
           topicId: tid(week),
           level: level,
@@ -1876,11 +1891,13 @@
             "Dài gấp " + k + " lần rộng → nhân (bảng nhân " + k + ").",
             "Dài = " + w + " × " + k + " = " + L + " cm.",
           ],
-          explainTip: "Gấp n lần = nhân với n (dùng bảng nhân).",
+          explainTip: "Gấp n lần = nhân với n.",
         });
       });
-    } else {
-      // Từ T10: có thể tìm rộng từ dài (chia), số vẫn trong bảng nhân
+    }
+
+    // T11+: mới được chia để tìm rộng (gấp ngược)
+    if (!beforeChia2) {
       bank.push(function () {
         var w = level === "advanced" ? rand(4, 12) : rand(3, 9);
         var k = pick([2, 3, 4, 5]);
