@@ -25,6 +25,9 @@ function defaultState() {
     dailyCompletedDate: null,
     byTopic: {},
     history: [],
+    // Bộ sưu tập nhân vật (thưởng 100%)
+    charactersOwned: [],
+    yogurtUnlocked: false,
   };
 }
 
@@ -161,6 +164,9 @@ function resetProgress() {
   var s = defaultState();
   s.childName = prev.childName;
   s.sound = prev.sound;
+  // Giữ bộ sưu tập nhân vật khi xóa tiến độ luyện (tránh mất quà bé đã đạt)
+  s.charactersOwned = prev.charactersOwned || [];
+  s.yogurtUnlocked = !!prev.yogurtUnlocked;
   saveState(s);
   return s;
 }

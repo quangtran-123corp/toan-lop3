@@ -71,6 +71,74 @@ function uiRand(a, b) {
   return Math.floor(Math.random() * (b - a + 1)) + a;
 }
 
+/** Popup chúc mừng + tặng nhân vật khi 100% */
+function showCharacterReward(info) {
+  const ch = info.character;
+  if (!ch) return;
+
+  let modal = $("#reward-modal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "reward-modal";
+    modal.className = "reward-modal";
+    modal.hidden = true;
+    modal.innerHTML =
+      '<div class="reward-dialog" role="dialog" aria-labelledby="reward-title">' +
+      '<p class="reward-sparkle" aria-hidden="true">✨🎉✨</p>' +
+      '<h2 id="reward-title">Chúc mừng Bé!</h2>' +
+      '<p class="reward-sub" id="reward-sub"></p>' +
+      '<div class="reward-char" id="reward-char"></div>' +
+      '<p class="reward-name" id="reward-name"></p>' +
+      '<p class="reward-blurb" id="reward-blurb"></p>' +
+      '<p class="reward-progress" id="reward-progress"></p>' +
+      '<p class="reward-yogurt" id="reward-yogurt" hidden></p>' +
+      '<button type="button" class="btn btn-primary btn-lg" id="btn-reward-ok">Nhận quà 🎁</button>' +
+      "</div>";
+    document.body.appendChild(modal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) hideCharacterReward();
+    });
+    $("#btn-reward-ok").addEventListener("click", hideCharacterReward);
+  }
+
+  $("#reward-sub").textContent = info.isNew
+    ? "Bé làm đúng hết — nhận 1 nhân vật mới!"
+    : "Bé làm đúng hết! (Bộ sưu tập đã đủ nhân vật này rồi, vẫn siêu đỉnh!)";
+  const charEl = $("#reward-char");
+  charEl.style.setProperty("--c", ch.color || "#4F46E5");
+  charEl.textContent = ch.emoji;
+  $("#reward-name").textContent = ch.name;
+  $("#reward-blurb").textContent = ch.blurb || "";
+  $("#reward-progress").textContent =
+    "Bộ sưu tập: " + info.ownedCount + " / " + info.goal + " nhân vật (mốc sữa chua)";
+
+  const yg = $("#reward-yogurt");
+  if (info.yogurtJustUnlocked || info.yogurtUnlocked) {
+    yg.hidden = false;
+    yg.textContent = info.yogurtJustUnlocked
+      ? "🍦 Woa! Bé đã đủ " +
+        info.goal +
+        " nhân vật — Ba sẽ chở Bé đi mua sữa chua!"
+      : "🍦 Bé đã mở quà sữa chua với Ba rồi — nhớ nhắc Ba nhé!";
+  } else {
+    yg.hidden = false;
+    const left = Math.max(0, info.goal - info.ownedCount);
+    yg.textContent =
+      left > 0
+        ? "Còn " + left + " nhân vật nữa là Ba chở đi mua sữa chua 🍦"
+        : "🍦 Đủ mốc sữa chua rồi!";
+  }
+
+  modal.hidden = false;
+  confettiBurst();
+  sfx("finish", 100);
+}
+
+function hideCharacterReward() {
+  const modal = $("#reward-modal");
+  if (modal) modal.hidden = true;
+}
+
 // ——— Home ———
 function renderHome() {
   state = ensureDayRollover(loadState());
@@ -102,6 +170,25 @@ function renderHome() {
     : `${state.dailyCorrectToday || 0} / ${state.dailyGoal} câu đúng`;
   $("#btn-daily").textContent = dailyDone ? "Luyện thêm 🌟" : "Bắt đầu thử thách 🚀";
   $("#daily-title").textContent = "10 câu · Hỗn hợp (Cơ bản + Nâng cao)";
+
+  // Bộ sưu tập nhân vật
+  let charBox = $("#char-collection-box");
+  if (!charBox) {
+    charBox = document.createElement("div");
+    charBox.id = "char-collection-box";
+    const daily = $("#daily-card");
+    if (daily && daily.parentNode) {
+      daily.parentNode.insertBefore(charBox, daily.nextSibling);
+    } else {
+      const gridHost = $("#topic-grid");
+      if (gridHost && gridHost.parentNode) {
+        gridHost.parentNode.insertBefore(charBox, gridHost);
+      }
+    }
+  }
+  if (charBox && window.Characters && typeof Characters.collectionHtml === "function") {
+    charBox.innerHTML = Characters.collectionHtml(state);
+  }
 
   const grid = $("#topic-grid");
   grid.innerHTML = TOPICS.map(function (t) {
@@ -474,11 +561,17 @@ function finishSession() {
   state = recorded && recorded.state ? recorded.state : recorded;
 
   let title, emoji, msg;
+  let rewardInfo = null;
   if (pct === 100) {
     emoji = "🏆";
     title = "Hoàn hảo!";
     msg = "Bé trả lời đúng hết — siêu đỉnh!";
     confettiBurst();
+    // Tặng nhân vật hoạt hình
+    if (window.Characters && typeof Characters.awardPerfect === "function") {
+      rewardInfo = Characters.awardPerfect(state);
+      state = loadState();
+    }
   } else if (pct >= 80) {
     emoji = "🎉";
     title = "Tuyệt vời!";
@@ -503,6 +596,10 @@ function finishSession() {
   $("#result-total").textContent = total;
   $("#result-stars").textContent = `+${starsEarned}`;
   $("#result-pct").textContent = `${pct}%`;
+
+  if (rewardInfo && rewardInfo.character) {
+    showCharacterReward(rewardInfo);
+  }
 
   const starsRow = $("#result-stars-row");
   const starCount = pct >= 90 ? 3 : pct >= 70 ? 2 : pct >= 40 ? 1 : 0;

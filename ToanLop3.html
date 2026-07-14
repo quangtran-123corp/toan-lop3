@@ -1325,16 +1325,238 @@ body {
   }
 }
 
+/* —— Bộ sưu tập nhân vật —— */
+.char-collection {
+  background: linear-gradient(145deg, #FFF7ED 0%, #EEF2FF 100%);
+  border: 2px solid #FDBA74;
+  border-radius: 20px;
+  padding: 14px 14px 12px;
+  margin: 12px 0 16px;
+  box-shadow: 0 6px 18px rgba(251, 146, 60, 0.12);
+}
+
+.char-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.char-head h3 {
+  font-size: 1rem;
+  font-weight: 900;
+  color: #9A3412;
+  margin: 0;
+}
+
+.char-count {
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: #4F46E5;
+  background: #EEF2FF;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.char-hint {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #78716C;
+  margin: 0 0 10px;
+}
+
+.char-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.char-cell {
+  background: #fff;
+  border: 2px solid #E7E5E4;
+  border-radius: 14px;
+  padding: 8px 4px 6px;
+  text-align: center;
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.char-cell.got {
+  border-color: var(--c, #4F46E5);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--c, #4F46E5) 25%, transparent);
+  background: linear-gradient(180deg, #fff 0%, color-mix(in srgb, var(--c, #4F46E5) 12%, #fff) 100%);
+}
+
+.char-cell.locked {
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
+.char-emoji {
+  font-size: 1.55rem;
+  line-height: 1.2;
+}
+
+.char-name {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #44403C;
+  line-height: 1.15;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.char-yogurt {
+  margin: 10px 0 0;
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: #9A3412;
+  background: #FFEDD5;
+  border-radius: 12px;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+.char-yogurt.ok {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+/* Popup thưởng nhân vật 100% */
+.reward-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(30, 27, 75, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.reward-modal[hidden] {
+  display: none !important;
+}
+
+.reward-dialog {
+  width: 100%;
+  max-width: 360px;
+  background: linear-gradient(165deg, #fff 0%, #EEF2FF 55%, #FDF4FF 100%);
+  border-radius: 24px;
+  padding: 22px 20px 18px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(79, 70, 229, 0.28);
+  animation: rewardPop 0.4s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+@keyframes rewardPop {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.reward-sparkle {
+  font-size: 1.4rem;
+  margin: 0 0 4px;
+}
+
+.reward-dialog h2 {
+  font-size: 1.45rem;
+  font-weight: 900;
+  color: #4F46E5;
+  margin: 0 0 6px;
+}
+
+.reward-sub {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #64748B;
+  margin: 0 0 12px;
+}
+
+.reward-char {
+  width: 100px;
+  height: 100px;
+  margin: 0 auto 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff, color-mix(in srgb, var(--c, #4F46E5) 35%, #fff));
+  border: 4px solid var(--c, #4F46E5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.2rem;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--c, #4F46E5) 35%, transparent);
+  animation: rewardBounce 0.8s ease infinite alternate;
+}
+
+@keyframes rewardBounce {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-6px);
+  }
+}
+
+.reward-name {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #1E1B4B;
+  margin: 4px 0;
+}
+
+.reward-blurb {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #64748B;
+  margin: 0 0 10px;
+}
+
+.reward-progress {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #4F46E5;
+  margin: 0 0 6px;
+}
+
+.reward-yogurt {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #9A3412;
+  background: #FFEDD5;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin: 0 0 14px;
+}
+
+#btn-reward-ok {
+  width: 100%;
+}
+
 /* Responsive */
 @media (min-width: 520px) {
   #app { padding-top: 24px; }
   .topic-grid { gap: 12px; }
+  .char-grid { grid-template-columns: repeat(6, 1fr); }
 }
 
 @media (max-width: 360px) {
   .mc-grid { grid-template-columns: 1fr; }
   .result-stats { grid-template-columns: 1fr 1fr; }
   .q-text { font-size: 1.08rem; }
+  .char-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
   </style>
@@ -2074,6 +2296,9 @@ function defaultState() {
     dailyCompletedDate: null,
     byTopic: {},
     history: [],
+    // Bộ sưu tập nhân vật (thưởng 100%)
+    charactersOwned: [],
+    yogurtUnlocked: false,
   };
 }
 
@@ -2210,6 +2435,9 @@ function resetProgress() {
   var s = defaultState();
   s.childName = prev.childName;
   s.sound = prev.sound;
+  // Giữ bộ sưu tập nhân vật khi xóa tiến độ luyện (tránh mất quà bé đã đạt)
+  s.charactersOwned = prev.charactersOwned || [];
+  s.yogurtUnlocked = !!prev.yogurtUnlocked;
   saveState(s);
   return s;
 }
@@ -3555,77 +3783,205 @@ function geoThreeAnglesPick(rightIdx) {
   return svgWrap(g, 320, 170);
 }
 
-/** Hàng hình a/b/c chọn đúng loại — labels + shapes, không highlight đáp án */
+/**
+ * Hàng hình a/b/c chọn đúng loại.
+ * shapes: [{kind, label}]
+ * kind: triangle | rect | square | trap | diamond | para | right-tri | pentagon
+ *
+ * Lưu ý phân biệt:
+ * - square: đứng thẳng, cạnh bằng, có dấu góc vuông
+ * - diamond (hình thoi): dẹt ngang rõ (không phải vuông xoay 45°)
+ * - para: hình bình hành nghiêng, dài ≠ rộng
+ */
 function geoPickShapesRow(shapes) {
-  // shapes: [{kind:'triangle'|'rect'|'square'|'trap'|'diamond', label:'a'}]
   var g = "";
   var n = shapes.length;
-  var cellW = Math.floor(300 / n);
+  var cellW = Math.floor(320 / Math.max(n, 1));
   for (var i = 0; i < n; i++) {
     var s = shapes[i];
     var cx = cellW * i + cellW / 2;
-    var cy = 70;
     var draw = "";
     if (s.kind === "triangle") {
+      // tam giác đều-ish — đáy rộng, đỉnh nhọn
       draw =
         '<polygon points="' +
         cx +
-        ",30 " +
+        ",28 " +
+        (cx - 40) +
+        ",112 " +
+        (cx + 40) +
+        ',112" fill="#ECFDF5" stroke="#047857" stroke-width="2.5"/>';
+    } else if (s.kind === "right-tri") {
+      draw =
+        '<polygon points="' +
         (cx - 36) +
-        ",110 " +
-        (cx + 36) +
-        ',110" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+        ",40 " +
+        (cx - 36) +
+        ",112 " +
+        (cx + 40) +
+        ',112" fill="#FEF3C7" stroke="#B45309" stroke-width="2.5"/>';
     } else if (s.kind === "square") {
+      // Vuông đứng + dấu góc vuông — không nhầm thoi
+      var ss = 58;
+      var sx = cx - ss / 2;
+      var sy = 42;
       draw =
         '<rect x="' +
-        (cx - 32) +
-        '" y="40" width="64" height="64" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+        sx +
+        '" y="' +
+        sy +
+        '" width="' +
+        ss +
+        '" height="' +
+        ss +
+        '" fill="#EEF2FF" stroke="#3730A3" stroke-width="2.8"/>' +
+        '<path d="M' +
+        (sx + 12) +
+        " " +
+        (sy + ss) +
+        " V" +
+        (sy + ss - 12) +
+        " H" +
+        sx +
+        '" fill="none" stroke="#F59E0B" stroke-width="2"/>' +
+        // gạch giữa 2 cạnh kề để gợi ý cạnh bằng
+        '<line x1="' +
+        (sx + 18) +
+        '" y1="' +
+        (sy + ss + 6) +
+        '" x2="' +
+        (sx + ss - 18) +
+        '" y2="' +
+        (sy + ss + 6) +
+        '" stroke="#6366F1" stroke-width="2"/>' +
+        '<line x1="' +
+        (sx + ss + 6) +
+        '" y1="' +
+        (sy + 18) +
+        '" x2="' +
+        (sx + ss + 6) +
+        '" y2="' +
+        (sy + ss - 18) +
+        '" stroke="#6366F1" stroke-width="2"/>';
     } else if (s.kind === "rect") {
+      // HCN rõ: dài gấp ~1.7 rộng
       draw =
         '<rect x="' +
-        (cx - 42) +
-        '" y="48" width="84" height="52" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+        (cx - 48) +
+        '" y="52" width="96" height="52" fill="#FDF4FF" stroke="#7E22CE" stroke-width="2.5"/>' +
+        '<path d="M' +
+        (cx - 48 + 12) +
+        " 104 V92 H" +
+        (cx - 48) +
+        '" fill="none" stroke="#F59E0B" stroke-width="2"/>';
     } else if (s.kind === "trap") {
       draw =
         '<polygon points="' +
-        (cx - 28) +
+        (cx - 26) +
         ",40 " +
-        (cx + 28) +
+        (cx + 26) +
         ",40 " +
-        (cx + 42) +
-        ",110 " +
-        (cx - 42) +
-        ',110" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
-    } else if (s.kind === "diamond") {
+        (cx + 48) +
+        ",112 " +
+        (cx - 48) +
+        ',112" fill="#FEF9C3" stroke="#A16207" stroke-width="2.5"/>';
+    } else if (s.kind === "diamond" || s.kind === "rhombus") {
+      // Hình thoi DẸT NGANG — đường chéo ngang >> dọc (không giống vuông xoay)
       draw =
         '<polygon points="' +
         cx +
-        ",30 " +
-        (cx + 40) +
-        ",72 " +
+        ",48 " +
+        (cx + 54) +
+        ",78 " +
         cx +
-        ",114 " +
+        ",108 " +
+        (cx - 54) +
+        ',78" fill="#FFE4E6" stroke="#BE123C" stroke-width="2.5"/>' +
+        // gợi ý: không có góc vuông (không vẽ dấu vuông)
+        '<text x="' +
+        cx +
+        '" y="36" text-anchor="middle" font-size="10" font-weight="800" fill="#BE123C" font-family="Nunito,sans-serif" opacity="0.0">.</text>';
+    } else if (s.kind === "para") {
+      // Hình bình hành nghiêng rõ — cạnh dài nằm ngang, lệch trái-phải
+      draw =
+        '<polygon points="' +
+        (cx - 20) +
+        ",48 " +
+        (cx + 48) +
+        ",48 " +
+        (cx + 28) +
+        ",108 " +
         (cx - 40) +
-        ',72" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+        ',108" fill="#E0E7FF" stroke="#4338CA" stroke-width="2.5"/>';
+    } else if (s.kind === "pentagon") {
+      draw =
+        '<polygon points="' +
+        cx +
+        ",32 " +
+        (cx + 38) +
+        ",58 " +
+        (cx + 24) +
+        ",112 " +
+        (cx - 24) +
+        ",112 " +
+        (cx - 38) +
+        ',58" fill="#F3E8FF" stroke="#7E22CE" stroke-width="2.5"/>';
+    } else if (s.kind === "circle") {
+      draw =
+        '<circle cx="' +
+        cx +
+        '" cy="78" r="36" fill="#DBEAFE" stroke="#1D4ED8" stroke-width="2.5"/>';
     } else {
       draw =
         '<polygon points="' +
         (cx - 36) +
-        ",110 " +
+        ",112 " +
         cx +
-        ",40 " +
+        ",32 " +
         (cx + 36) +
-        ',110" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+        ',112" fill="#ECFDF5" stroke="#047857" stroke-width="2.5"/>';
     }
     g +=
       draw +
       '<text x="' +
       cx +
-      '" y="145" text-anchor="middle" font-size="15" font-weight="900" fill="#4F46E5" font-family="Nunito,sans-serif">' +
+      '" y="148" text-anchor="middle" font-size="15" font-weight="900" fill="#4F46E5" font-family="Nunito,sans-serif">' +
       (s.label || String.fromCharCode(97 + i)) +
       ")</text>";
   }
-  return svgWrap(g, 300, 165);
+  return svgWrap(g, 320, 168);
+}
+
+/** Xáo trộn vị trí đáp án đúng trong hàng hình a/b/c/d */
+function geoPickShapesQuiz(correctKind, distractorKinds) {
+  distractorKinds = distractorKinds || ["trap", "rect", "diamond", "para", "circle", "right-tri"];
+  var opts = [correctKind];
+  var pool = distractorKinds.slice();
+  // loại bỏ kind trùng correct
+  pool = pool.filter(function (k) {
+    return k !== correctKind;
+  });
+  while (opts.length < 4 && pool.length) {
+    var idx = Math.floor(Math.random() * pool.length);
+    opts.push(pool.splice(idx, 1)[0]);
+  }
+  // shuffle
+  for (var i = opts.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = opts[i];
+    opts[i] = opts[j];
+    opts[j] = t;
+  }
+  var labels = ["a", "b", "c", "d"];
+  var shapes = opts.map(function (k, i) {
+    return { kind: k, label: labels[i] };
+  });
+  var ansIdx = opts.indexOf(correctKind);
+  return {
+    visual: geoPickShapesRow(shapes.slice(0, Math.min(4, shapes.length))),
+    answer: labels[ansIdx],
+    options: labels.slice(0, shapes.length),
+  };
 }
 
 /** Lưới m×n ô vuông nhỏ — hỏi đếm (không ghi đáp án) */
@@ -6940,8 +7296,24 @@ window.questionKey = questionKey;
     // Chỉ dùng bảng nhân/chia 2: bán kính 2–9 → đường kính 4–18.
     // Từ tuần 10 trở đi mới cho số lớn hơn (ôn / nâng cao).
     var early = !week || week < 10;
-    var mode = pick(["r2d", "d2r", "countR", "fact"]);
-    if (mode === "countR") {
+    var mode = pick(["r2d", "d2r", "countR", "countR2", "fact", "center"]);
+    if (mode === "center") {
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Điểm O trong hình là gì của hình tròn?",
+        type: "mc",
+        options: ["Tâm hình tròn", "Trung điểm một dây cung bất kỳ", "Góc vuông", "Đỉnh hình vuông"],
+        answer: "Tâm hình tròn",
+        visual: V("geoCircle", true, false, "bán kính", null),
+        explainSteps: [
+          "O là tâm — điểm cách đều mọi điểm trên đường tròn.",
+          "Đoạn từ O ra viền là bán kính.",
+        ],
+      });
+    }
+    if (mode === "countR" || mode === "countR2") {
       var nR = pick([3, 4, 5, 6]);
       return q({
         topicId: tid(week),
@@ -7147,64 +7519,189 @@ window.questionKey = questionKey;
         });
       },
       function () {
-        // MathX: chọn hình tam giác trong a/b/c
+        // Chọn tam giác — vị trí đáp án xáo trộn; distractor rõ (thang, HCN, thoi dẹt)
+        var quiz = V("geoPickShapesQuiz", "triangle", [
+          "trap",
+          "rect",
+          "diamond",
+          "para",
+          "circle",
+        ]);
+        if (!quiz) {
+          return q({
+            topicId: tid(week),
+            level: level,
+            week: week,
+            text: "Hình tam giác có bao nhiêu cạnh?",
+            type: "mc",
+            options: ["3", "4", "5", "6"],
+            answer: "3",
+            visual: V("geoTriangle"),
+          });
+        }
         return q({
           topicId: tid(week),
           level: level,
           week: week,
           text: "Trong các hình sau, hình nào là hình tam giác?",
           type: "mc",
-          options: ["a", "b", "c"],
-          answer: "c",
-          visual: V("geoPickShapesRow", [
-            { kind: "trap", label: "a" },
-            { kind: "rect", label: "b" },
-            { kind: "triangle", label: "c" },
-          ]),
+          options: quiz.options,
+          answer: quiz.answer,
+          visual: quiz.visual,
           explainSteps: [
-            "Hình tam giác có 3 cạnh, 3 đỉnh.",
-            "Hình c có 3 cạnh → là hình tam giác.",
+            "Hình tam giác có đúng 3 cạnh, 3 đỉnh.",
+            "Chọn hình có 3 cạnh (đáp án " + quiz.answer + ").",
           ],
         });
       },
       function () {
-        // MathX: chọn hình chữ nhật
+        // HCN ≠ vuông; thoi dẹt + bình hành để tránh nhầm
+        var quiz = V("geoPickShapesQuiz", "rect", [
+          "square",
+          "diamond",
+          "para",
+          "triangle",
+          "trap",
+        ]);
+        if (!quiz) {
+          return q({
+            topicId: tid(week),
+            level: level,
+            week: week,
+            text: "Hình chữ nhật có bao nhiêu góc vuông?",
+            type: "mc",
+            options: ["2", "3", "4", "5"],
+            answer: "4",
+            visual: V("geoRect", true, null, null),
+          });
+        }
         return q({
           topicId: tid(week),
           level: level,
           week: week,
-          text: "Hình nào dưới đây là hình chữ nhật (không phải hình vuông)?",
+          text: "Hình nào là hình chữ nhật (dài khác rộng, có góc vuông)?",
           type: "mc",
-          options: ["a", "b", "c", "d"],
-          answer: "a",
-          visual: V("geoPickShapesRow", [
-            { kind: "rect", label: "a" },
-            { kind: "square", label: "b" },
-            { kind: "diamond", label: "c" },
-            { kind: "triangle", label: "d" },
-          ]),
+          options: quiz.options,
+          answer: quiz.answer,
+          visual: quiz.visual,
           explainSteps: [
             "Hình chữ nhật: 4 góc vuông, chiều dài khác chiều rộng.",
-            "Hình a là hình chữ nhật. Hình b là hình vuông (trường hợp đặc biệt).",
+            "Không chọn hình vuông (4 cạnh bằng) hay hình thoi dẹt (không có góc vuông).",
+            "Đáp án: " + quiz.answer + ".",
           ],
         });
       },
       function () {
+        // Vuông vs thoi dẹt — thoi dẹt ngang, vuông có dấu góc + gạch cạnh
+        var quiz = V("geoPickShapesQuiz", "square", [
+          "diamond",
+          "para",
+          "rect",
+          "trap",
+          "right-tri",
+        ]);
+        if (!quiz) {
+          return q({
+            topicId: tid(week),
+            level: level,
+            week: week,
+            text: "Hình vuông có bao nhiêu cạnh bằng nhau?",
+            type: "mc",
+            options: ["2", "3", "4", "5"],
+            answer: "4",
+            visual: V("geoSquare", true, null),
+          });
+        }
         return q({
           topicId: tid(week),
           level: level,
           week: week,
-          text: "Hình nào dưới đây là hình vuông?",
+          text: "Hình nào là hình vuông? (4 cạnh bằng + 4 góc vuông)",
           type: "mc",
-          options: ["a", "b", "c", "d"],
-          answer: "b",
-          visual: V("geoPickShapesRow", [
-            { kind: "rect", label: "a" },
-            { kind: "square", label: "b" },
-            { kind: "diamond", label: "c" },
-            { kind: "triangle", label: "d" },
-          ]),
-          explain: "Hình vuông: 4 cạnh bằng nhau và 4 góc vuông → hình b.",
+          options: quiz.options,
+          answer: quiz.answer,
+          visual: quiz.visual,
+          explainSteps: [
+            "Hình vuông đứng thẳng, 4 cạnh bằng, có dấu góc vuông.",
+            "Hình thoi dẹt ngang không phải hình vuông (dù 4 cạnh bằng nhau).",
+            "Đáp án: " + quiz.answer + ".",
+          ],
+        });
+      },
+      function () {
+        // Nhận biết hình thoi dẹt (không phải vuông)
+        var quiz = V("geoPickShapesQuiz", "diamond", [
+          "square",
+          "rect",
+          "triangle",
+          "trap",
+          "circle",
+        ]);
+        if (!quiz) {
+          return q({
+            topicId: tid(week),
+            level: level,
+            week: week,
+            text: "Hình thoi khác hình vuông ở điểm nào?",
+            type: "mc",
+            options: [
+              "Hình thoi thường không có góc vuông",
+              "Hình thoi có 3 cạnh",
+              "Hình thoi là hình tròn",
+              "Hình thoi luôn có góc vuông",
+            ],
+            answer: "Hình thoi thường không có góc vuông",
+            visual: V("geoPickShapesRow", [
+              { kind: "diamond", label: "a" },
+              { kind: "square", label: "b" },
+            ]),
+          });
+        }
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Hình nào là hình thoi (dẹt, không có góc vuông)?",
+          type: "mc",
+          options: quiz.options,
+          answer: quiz.answer,
+          visual: quiz.visual,
+          explainSteps: [
+            "Hình thoi có 4 cạnh bằng nhau nhưng thường không có góc vuông.",
+            "Hình thoi trên đề được vẽ dẹt ngang — khác hẳn hình vuông đứng.",
+            "Đáp án: " + quiz.answer + ".",
+          ],
+        });
+      },
+      function () {
+        var quiz = V("geoPickShapesQuiz", "circle", [
+          "square",
+          "triangle",
+          "rect",
+          "trap",
+        ]);
+        if (!quiz) {
+          return q({
+            topicId: tid(week),
+            level: level,
+            week: week,
+            text: "Hình tròn có cạnh thẳng không?",
+            type: "mc",
+            options: ["Không", "Có 1 cạnh", "Có 4 cạnh", "Có 3 cạnh"],
+            answer: "Không",
+            visual: V("geoCircle", false, false, null, null),
+          });
+        }
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Hình nào là hình tròn?",
+          type: "mc",
+          options: quiz.options,
+          answer: quiz.answer,
+          visual: quiz.visual,
+          explain: "Hình tròn không có cạnh thẳng. Đáp án: " + quiz.answer + ".",
         });
       },
       function () {
@@ -8385,6 +8882,231 @@ window.questionKey = questionKey;
 })(typeof window !== "undefined" ? window : globalThis);
 
 
+/* ===== CHARACTERS (reward 100%) ===== */
+/**
+ * Bộ sưu tập nhân vật — thưởng khi bé làm đúng 100% một phiên.
+ * Đủ 10 nhân vật → Ba chở đi mua sữa chua 🍦
+ */
+(function (global) {
+  var YOGURT_GOAL = 10;
+
+  /** Danh sách nhân vật dễ thương (tên thân thuộc với bé Việt) */
+  var CHARACTERS = [
+    {
+      id: "doraemon",
+      name: "Doraemon",
+      emoji: "🤖",
+      color: "#3B82F6",
+      blurb: "Mèo máy túi thần kỳ từ tương lai!",
+    },
+    {
+      id: "nobita",
+      name: "Nobita",
+      emoji: "👓",
+      color: "#F59E0B",
+      blurb: "Bạn thân của Doraemon, hay ngủ nướng.",
+    },
+    {
+      id: "shizuka",
+      name: "Xuka",
+      emoji: "🎀",
+      color: "#EC4899",
+      blurb: "Dịu dàng, chăm chỉ và tốt bụng.",
+    },
+    {
+      id: "gian",
+      name: "Chaien",
+      emoji: "🎤",
+      color: "#EF4444",
+      blurb: "To lớn, thích hát (hơi... to)!",
+    },
+    {
+      id: "suneo",
+      name: "Suneo",
+      emoji: "💎",
+      color: "#8B5CF6",
+      blurb: "Hay khoe đồ mới, nhưng vẫn là bạn.",
+    },
+    {
+      id: "dorami",
+      name: "Dorami",
+      emoji: "💛",
+      color: "#EAB308",
+      blurb: "Em gái đáng yêu của Doraemon.",
+    },
+    {
+      id: "dekisugi",
+      name: "Dekisugi",
+      emoji: "📚",
+      color: "#10B981",
+      blurb: "Học giỏi, luôn sẵn sàng giúp bạn.",
+    },
+    {
+      id: "jaiko",
+      name: "Jaiko",
+      emoji: "✏️",
+      color: "#F472B6",
+      blurb: "Em gái Chaien, thích vẽ truyện tranh.",
+    },
+    {
+      id: "miichan",
+      name: "Mi-chan",
+      emoji: "🐱",
+      color: "#FB923C",
+      blurb: "Chú mèo cưng của Xuka.",
+    },
+    {
+      id: "mini-dora",
+      name: "Mini-Dora",
+      emoji: "🔵",
+      color: "#60A5FA",
+      blurb: "Bảo bối nhỏ xinh xắn!",
+    },
+    {
+      id: "take-copter",
+      name: "Chong chóng tre",
+      emoji: "🚁",
+      color: "#14B8A6",
+      blurb: "Bay lượn khắp nơi cùng bạn bè.",
+    },
+    {
+      id: "time-machine",
+      name: "Cỗ máy thời gian",
+      emoji: "🕰️",
+      color: "#6366F1",
+      blurb: "Du hành quá khứ – tương lai!",
+    },
+  ];
+
+  function byId(id) {
+    for (var i = 0; i < CHARACTERS.length; i++) {
+      if (CHARACTERS[i].id === id) return CHARACTERS[i];
+    }
+    return null;
+  }
+
+  function ownedList(state) {
+    var list = (state && state.charactersOwned) || [];
+    return Array.isArray(list) ? list.slice() : [];
+  }
+
+  function ownedCount(state) {
+    return ownedList(state).length;
+  }
+
+  function unowned(state) {
+    var have = {};
+    ownedList(state).forEach(function (id) {
+      have[id] = true;
+    });
+    return CHARACTERS.filter(function (c) {
+      return !have[c.id];
+    });
+  }
+
+  /**
+   * Thưởng 1 nhân vật khi làm đúng 100%.
+   * Ưu tiên nhân vật chưa có; nếu đã đủ bộ thì chọn ngẫu nhiên (không thêm trùng).
+   * Trả về { character, isNew, yogurtJustUnlocked, ownedCount, goal }
+   */
+  function awardPerfect(state) {
+    if (!state.charactersOwned) state.charactersOwned = [];
+    var pool = unowned(state);
+    var isNew = pool.length > 0;
+    var pick;
+    if (isNew) {
+      pick = pool[Math.floor(Math.random() * pool.length)];
+      state.charactersOwned.push(pick.id);
+    } else {
+      // Đã sưu tầm đủ — vẫn chúc mừng, không thêm trùng
+      pick = CHARACTERS[Math.floor(Math.random() * CHARACTERS.length)];
+    }
+
+    var count = state.charactersOwned.length;
+    var yogurtJustUnlocked = false;
+    if (count >= YOGURT_GOAL && !state.yogurtUnlocked) {
+      state.yogurtUnlocked = true;
+      yogurtJustUnlocked = true;
+    }
+
+    if (typeof saveState === "function") saveState(state);
+    else if (global.saveState) global.saveState(state);
+
+    return {
+      character: pick,
+      isNew: isNew,
+      yogurtJustUnlocked: yogurtJustUnlocked,
+      yogurtUnlocked: !!state.yogurtUnlocked,
+      ownedCount: count,
+      goal: YOGURT_GOAL,
+    };
+  }
+
+  function collectionHtml(state) {
+    var owned = {};
+    ownedList(state).forEach(function (id) {
+      owned[id] = true;
+    });
+    var count = ownedList(state).length;
+    var cells = CHARACTERS.map(function (c) {
+      var got = !!owned[c.id];
+      return (
+        '<div class="char-cell' +
+        (got ? " got" : " locked") +
+        '" style="--c:' +
+        c.color +
+        '" title="' +
+        (got ? c.name + " — " + c.blurb : "Chưa mở") +
+        '">' +
+        '<span class="char-emoji">' +
+        (got ? c.emoji : "❓") +
+        "</span>" +
+        '<span class="char-name">' +
+        (got ? c.name : "???") +
+        "</span></div>"
+      );
+    }).join("");
+
+    var yogurt =
+      state && state.yogurtUnlocked
+        ? '<p class="char-yogurt ok">🍦 Đủ ' +
+          YOGURT_GOAL +
+          " nhân vật — Ba chở bé đi mua sữa chua nhé!</p>"
+        : '<p class="char-yogurt">Sưu tầm <strong>' +
+          count +
+          "/" +
+          YOGURT_GOAL +
+          "</strong> nhân vật → Ba chở đi mua sữa chua 🍦</p>";
+
+    return (
+      '<div class="char-collection">' +
+      '<div class="char-head">' +
+      "<h3>🎁 Bộ sưu tập nhân vật</h3>" +
+      '<span class="char-count">' +
+      count +
+      "/" +
+      CHARACTERS.length +
+      "</span></div>" +
+      '<p class="char-hint">Làm đúng <strong>100%</strong> một bài để nhận 1 nhân vật mới!</p>' +
+      '<div class="char-grid">' +
+      cells +
+      "</div>" +
+      yogurt +
+      "</div>"
+    );
+  }
+
+  global.Characters = {
+    list: CHARACTERS,
+    YOGURT_GOAL: YOGURT_GOAL,
+    byId: byId,
+    ownedCount: ownedCount,
+    awardPerfect: awardPerfect,
+    collectionHtml: collectionHtml,
+  };
+})(typeof window !== "undefined" ? window : this);
+
+
 /* ===== EMAIL REPORT ===== */
 /**
  * Gửi báo cáo kết quả qua Web3Forms (miễn phí, ít bị antivirus chặn hơn FormSubmit).
@@ -9273,6 +9995,74 @@ function uiRand(a, b) {
   return Math.floor(Math.random() * (b - a + 1)) + a;
 }
 
+/** Popup chúc mừng + tặng nhân vật khi 100% */
+function showCharacterReward(info) {
+  const ch = info.character;
+  if (!ch) return;
+
+  let modal = $("#reward-modal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "reward-modal";
+    modal.className = "reward-modal";
+    modal.hidden = true;
+    modal.innerHTML =
+      '<div class="reward-dialog" role="dialog" aria-labelledby="reward-title">' +
+      '<p class="reward-sparkle" aria-hidden="true">✨🎉✨</p>' +
+      '<h2 id="reward-title">Chúc mừng Bé!</h2>' +
+      '<p class="reward-sub" id="reward-sub"></p>' +
+      '<div class="reward-char" id="reward-char"></div>' +
+      '<p class="reward-name" id="reward-name"></p>' +
+      '<p class="reward-blurb" id="reward-blurb"></p>' +
+      '<p class="reward-progress" id="reward-progress"></p>' +
+      '<p class="reward-yogurt" id="reward-yogurt" hidden></p>' +
+      '<button type="button" class="btn btn-primary btn-lg" id="btn-reward-ok">Nhận quà 🎁</button>' +
+      "</div>";
+    document.body.appendChild(modal);
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) hideCharacterReward();
+    });
+    $("#btn-reward-ok").addEventListener("click", hideCharacterReward);
+  }
+
+  $("#reward-sub").textContent = info.isNew
+    ? "Bé làm đúng hết — nhận 1 nhân vật mới!"
+    : "Bé làm đúng hết! (Bộ sưu tập đã đủ nhân vật này rồi, vẫn siêu đỉnh!)";
+  const charEl = $("#reward-char");
+  charEl.style.setProperty("--c", ch.color || "#4F46E5");
+  charEl.textContent = ch.emoji;
+  $("#reward-name").textContent = ch.name;
+  $("#reward-blurb").textContent = ch.blurb || "";
+  $("#reward-progress").textContent =
+    "Bộ sưu tập: " + info.ownedCount + " / " + info.goal + " nhân vật (mốc sữa chua)";
+
+  const yg = $("#reward-yogurt");
+  if (info.yogurtJustUnlocked || info.yogurtUnlocked) {
+    yg.hidden = false;
+    yg.textContent = info.yogurtJustUnlocked
+      ? "🍦 Woa! Bé đã đủ " +
+        info.goal +
+        " nhân vật — Ba sẽ chở Bé đi mua sữa chua!"
+      : "🍦 Bé đã mở quà sữa chua với Ba rồi — nhớ nhắc Ba nhé!";
+  } else {
+    yg.hidden = false;
+    const left = Math.max(0, info.goal - info.ownedCount);
+    yg.textContent =
+      left > 0
+        ? "Còn " + left + " nhân vật nữa là Ba chở đi mua sữa chua 🍦"
+        : "🍦 Đủ mốc sữa chua rồi!";
+  }
+
+  modal.hidden = false;
+  confettiBurst();
+  sfx("finish", 100);
+}
+
+function hideCharacterReward() {
+  const modal = $("#reward-modal");
+  if (modal) modal.hidden = true;
+}
+
 // ——— Home ———
 function renderHome() {
   state = ensureDayRollover(loadState());
@@ -9304,6 +10094,25 @@ function renderHome() {
     : `${state.dailyCorrectToday || 0} / ${state.dailyGoal} câu đúng`;
   $("#btn-daily").textContent = dailyDone ? "Luyện thêm 🌟" : "Bắt đầu thử thách 🚀";
   $("#daily-title").textContent = "10 câu · Hỗn hợp (Cơ bản + Nâng cao)";
+
+  // Bộ sưu tập nhân vật
+  let charBox = $("#char-collection-box");
+  if (!charBox) {
+    charBox = document.createElement("div");
+    charBox.id = "char-collection-box";
+    const daily = $("#daily-card");
+    if (daily && daily.parentNode) {
+      daily.parentNode.insertBefore(charBox, daily.nextSibling);
+    } else {
+      const gridHost = $("#topic-grid");
+      if (gridHost && gridHost.parentNode) {
+        gridHost.parentNode.insertBefore(charBox, gridHost);
+      }
+    }
+  }
+  if (charBox && window.Characters && typeof Characters.collectionHtml === "function") {
+    charBox.innerHTML = Characters.collectionHtml(state);
+  }
 
   const grid = $("#topic-grid");
   grid.innerHTML = TOPICS.map(function (t) {
@@ -9676,11 +10485,17 @@ function finishSession() {
   state = recorded && recorded.state ? recorded.state : recorded;
 
   let title, emoji, msg;
+  let rewardInfo = null;
   if (pct === 100) {
     emoji = "🏆";
     title = "Hoàn hảo!";
     msg = "Bé trả lời đúng hết — siêu đỉnh!";
     confettiBurst();
+    // Tặng nhân vật hoạt hình
+    if (window.Characters && typeof Characters.awardPerfect === "function") {
+      rewardInfo = Characters.awardPerfect(state);
+      state = loadState();
+    }
   } else if (pct >= 80) {
     emoji = "🎉";
     title = "Tuyệt vời!";
@@ -9705,6 +10520,10 @@ function finishSession() {
   $("#result-total").textContent = total;
   $("#result-stars").textContent = `+${starsEarned}`;
   $("#result-pct").textContent = `${pct}%`;
+
+  if (rewardInfo && rewardInfo.character) {
+    showCharacterReward(rewardInfo);
+  }
 
   const starsRow = $("#result-stars-row");
   const starCount = pct >= 90 ? 3 : pct >= 70 ? 2 : pct >= 40 ? 1 : 0;

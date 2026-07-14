@@ -1330,77 +1330,205 @@ function geoThreeAnglesPick(rightIdx) {
   return svgWrap(g, 320, 170);
 }
 
-/** Hàng hình a/b/c chọn đúng loại — labels + shapes, không highlight đáp án */
+/**
+ * Hàng hình a/b/c chọn đúng loại.
+ * shapes: [{kind, label}]
+ * kind: triangle | rect | square | trap | diamond | para | right-tri | pentagon
+ *
+ * Lưu ý phân biệt:
+ * - square: đứng thẳng, cạnh bằng, có dấu góc vuông
+ * - diamond (hình thoi): dẹt ngang rõ (không phải vuông xoay 45°)
+ * - para: hình bình hành nghiêng, dài ≠ rộng
+ */
 function geoPickShapesRow(shapes) {
-  // shapes: [{kind:'triangle'|'rect'|'square'|'trap'|'diamond', label:'a'}]
   var g = "";
   var n = shapes.length;
-  var cellW = Math.floor(300 / n);
+  var cellW = Math.floor(320 / Math.max(n, 1));
   for (var i = 0; i < n; i++) {
     var s = shapes[i];
     var cx = cellW * i + cellW / 2;
-    var cy = 70;
     var draw = "";
     if (s.kind === "triangle") {
+      // tam giác đều-ish — đáy rộng, đỉnh nhọn
       draw =
         '<polygon points="' +
         cx +
-        ",30 " +
+        ",28 " +
+        (cx - 40) +
+        ",112 " +
+        (cx + 40) +
+        ',112" fill="#ECFDF5" stroke="#047857" stroke-width="2.5"/>';
+    } else if (s.kind === "right-tri") {
+      draw =
+        '<polygon points="' +
         (cx - 36) +
-        ",110 " +
-        (cx + 36) +
-        ',110" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+        ",40 " +
+        (cx - 36) +
+        ",112 " +
+        (cx + 40) +
+        ',112" fill="#FEF3C7" stroke="#B45309" stroke-width="2.5"/>';
     } else if (s.kind === "square") {
+      // Vuông đứng + dấu góc vuông — không nhầm thoi
+      var ss = 58;
+      var sx = cx - ss / 2;
+      var sy = 42;
       draw =
         '<rect x="' +
-        (cx - 32) +
-        '" y="40" width="64" height="64" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+        sx +
+        '" y="' +
+        sy +
+        '" width="' +
+        ss +
+        '" height="' +
+        ss +
+        '" fill="#EEF2FF" stroke="#3730A3" stroke-width="2.8"/>' +
+        '<path d="M' +
+        (sx + 12) +
+        " " +
+        (sy + ss) +
+        " V" +
+        (sy + ss - 12) +
+        " H" +
+        sx +
+        '" fill="none" stroke="#F59E0B" stroke-width="2"/>' +
+        // gạch giữa 2 cạnh kề để gợi ý cạnh bằng
+        '<line x1="' +
+        (sx + 18) +
+        '" y1="' +
+        (sy + ss + 6) +
+        '" x2="' +
+        (sx + ss - 18) +
+        '" y2="' +
+        (sy + ss + 6) +
+        '" stroke="#6366F1" stroke-width="2"/>' +
+        '<line x1="' +
+        (sx + ss + 6) +
+        '" y1="' +
+        (sy + 18) +
+        '" x2="' +
+        (sx + ss + 6) +
+        '" y2="' +
+        (sy + ss - 18) +
+        '" stroke="#6366F1" stroke-width="2"/>';
     } else if (s.kind === "rect") {
+      // HCN rõ: dài gấp ~1.7 rộng
       draw =
         '<rect x="' +
-        (cx - 42) +
-        '" y="48" width="84" height="52" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+        (cx - 48) +
+        '" y="52" width="96" height="52" fill="#FDF4FF" stroke="#7E22CE" stroke-width="2.5"/>' +
+        '<path d="M' +
+        (cx - 48 + 12) +
+        " 104 V92 H" +
+        (cx - 48) +
+        '" fill="none" stroke="#F59E0B" stroke-width="2"/>';
     } else if (s.kind === "trap") {
       draw =
         '<polygon points="' +
-        (cx - 28) +
+        (cx - 26) +
         ",40 " +
-        (cx + 28) +
+        (cx + 26) +
         ",40 " +
-        (cx + 42) +
-        ",110 " +
-        (cx - 42) +
-        ',110" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
-    } else if (s.kind === "diamond") {
+        (cx + 48) +
+        ",112 " +
+        (cx - 48) +
+        ',112" fill="#FEF9C3" stroke="#A16207" stroke-width="2.5"/>';
+    } else if (s.kind === "diamond" || s.kind === "rhombus") {
+      // Hình thoi DẸT NGANG — đường chéo ngang >> dọc (không giống vuông xoay)
       draw =
         '<polygon points="' +
         cx +
-        ",30 " +
-        (cx + 40) +
-        ",72 " +
+        ",48 " +
+        (cx + 54) +
+        ",78 " +
         cx +
-        ",114 " +
+        ",108 " +
+        (cx - 54) +
+        ',78" fill="#FFE4E6" stroke="#BE123C" stroke-width="2.5"/>' +
+        // gợi ý: không có góc vuông (không vẽ dấu vuông)
+        '<text x="' +
+        cx +
+        '" y="36" text-anchor="middle" font-size="10" font-weight="800" fill="#BE123C" font-family="Nunito,sans-serif" opacity="0.0">.</text>';
+    } else if (s.kind === "para") {
+      // Hình bình hành nghiêng rõ — cạnh dài nằm ngang, lệch trái-phải
+      draw =
+        '<polygon points="' +
+        (cx - 20) +
+        ",48 " +
+        (cx + 48) +
+        ",48 " +
+        (cx + 28) +
+        ",108 " +
         (cx - 40) +
-        ',72" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+        ',108" fill="#E0E7FF" stroke="#4338CA" stroke-width="2.5"/>';
+    } else if (s.kind === "pentagon") {
+      draw =
+        '<polygon points="' +
+        cx +
+        ",32 " +
+        (cx + 38) +
+        ",58 " +
+        (cx + 24) +
+        ",112 " +
+        (cx - 24) +
+        ",112 " +
+        (cx - 38) +
+        ',58" fill="#F3E8FF" stroke="#7E22CE" stroke-width="2.5"/>';
+    } else if (s.kind === "circle") {
+      draw =
+        '<circle cx="' +
+        cx +
+        '" cy="78" r="36" fill="#DBEAFE" stroke="#1D4ED8" stroke-width="2.5"/>';
     } else {
       draw =
         '<polygon points="' +
         (cx - 36) +
-        ",110 " +
+        ",112 " +
         cx +
-        ",40 " +
+        ",32 " +
         (cx + 36) +
-        ',110" fill="#FFF" stroke="#0F172A" stroke-width="2.5"/>';
+        ',112" fill="#ECFDF5" stroke="#047857" stroke-width="2.5"/>';
     }
     g +=
       draw +
       '<text x="' +
       cx +
-      '" y="145" text-anchor="middle" font-size="15" font-weight="900" fill="#4F46E5" font-family="Nunito,sans-serif">' +
+      '" y="148" text-anchor="middle" font-size="15" font-weight="900" fill="#4F46E5" font-family="Nunito,sans-serif">' +
       (s.label || String.fromCharCode(97 + i)) +
       ")</text>";
   }
-  return svgWrap(g, 300, 165);
+  return svgWrap(g, 320, 168);
+}
+
+/** Xáo trộn vị trí đáp án đúng trong hàng hình a/b/c/d */
+function geoPickShapesQuiz(correctKind, distractorKinds) {
+  distractorKinds = distractorKinds || ["trap", "rect", "diamond", "para", "circle", "right-tri"];
+  var opts = [correctKind];
+  var pool = distractorKinds.slice();
+  // loại bỏ kind trùng correct
+  pool = pool.filter(function (k) {
+    return k !== correctKind;
+  });
+  while (opts.length < 4 && pool.length) {
+    var idx = Math.floor(Math.random() * pool.length);
+    opts.push(pool.splice(idx, 1)[0]);
+  }
+  // shuffle
+  for (var i = opts.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = opts[i];
+    opts[i] = opts[j];
+    opts[j] = t;
+  }
+  var labels = ["a", "b", "c", "d"];
+  var shapes = opts.map(function (k, i) {
+    return { kind: k, label: labels[i] };
+  });
+  var ansIdx = opts.indexOf(correctKind);
+  return {
+    visual: geoPickShapesRow(shapes.slice(0, Math.min(4, shapes.length))),
+    answer: labels[ansIdx],
+    options: labels.slice(0, shapes.length),
+  };
 }
 
 /** Lưới m×n ô vuông nhỏ — hỏi đếm (không ghi đáp án) */

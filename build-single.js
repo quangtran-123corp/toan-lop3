@@ -7,6 +7,7 @@ const storage = fs.readFileSync(path.join(__dirname, "js", "storage.js"), "utf8"
 const questions = fs.readFileSync(path.join(__dirname, "js", "questions.js"), "utf8");
 const mathx = fs.readFileSync(path.join(__dirname, "js", "mathx-questions.js"), "utf8");
 const sounds = fs.readFileSync(path.join(__dirname, "js", "sounds.js"), "utf8");
+const characters = fs.readFileSync(path.join(__dirname, "js", "characters.js"), "utf8");
 const emailReport = fs.readFileSync(path.join(__dirname, "js", "email-report.js"), "utf8");
 const app = fs.readFileSync(path.join(__dirname, "js", "app.js"), "utf8");
 const html = fs.readFileSync(path.join(__dirname, "index.html"), "utf8");
@@ -50,6 +51,9 @@ ${mathx}
 
 /* ===== SOUNDS ===== */
 ${sounds}
+
+/* ===== CHARACTERS (reward 100%) ===== */
+${characters}
 
 /* ===== EMAIL REPORT ===== */
 ${emailReport}

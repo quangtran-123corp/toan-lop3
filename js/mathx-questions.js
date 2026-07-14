@@ -1700,8 +1700,24 @@
     // Chỉ dùng bảng nhân/chia 2: bán kính 2–9 → đường kính 4–18.
     // Từ tuần 10 trở đi mới cho số lớn hơn (ôn / nâng cao).
     var early = !week || week < 10;
-    var mode = pick(["r2d", "d2r", "countR", "fact"]);
-    if (mode === "countR") {
+    var mode = pick(["r2d", "d2r", "countR", "countR2", "fact", "center"]);
+    if (mode === "center") {
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Điểm O trong hình là gì của hình tròn?",
+        type: "mc",
+        options: ["Tâm hình tròn", "Trung điểm một dây cung bất kỳ", "Góc vuông", "Đỉnh hình vuông"],
+        answer: "Tâm hình tròn",
+        visual: V("geoCircle", true, false, "bán kính", null),
+        explainSteps: [
+          "O là tâm — điểm cách đều mọi điểm trên đường tròn.",
+          "Đoạn từ O ra viền là bán kính.",
+        ],
+      });
+    }
+    if (mode === "countR" || mode === "countR2") {
       var nR = pick([3, 4, 5, 6]);
       return q({
         topicId: tid(week),
@@ -1907,64 +1923,189 @@
         });
       },
       function () {
-        // MathX: chọn hình tam giác trong a/b/c
+        // Chọn tam giác — vị trí đáp án xáo trộn; distractor rõ (thang, HCN, thoi dẹt)
+        var quiz = V("geoPickShapesQuiz", "triangle", [
+          "trap",
+          "rect",
+          "diamond",
+          "para",
+          "circle",
+        ]);
+        if (!quiz) {
+          return q({
+            topicId: tid(week),
+            level: level,
+            week: week,
+            text: "Hình tam giác có bao nhiêu cạnh?",
+            type: "mc",
+            options: ["3", "4", "5", "6"],
+            answer: "3",
+            visual: V("geoTriangle"),
+          });
+        }
         return q({
           topicId: tid(week),
           level: level,
           week: week,
           text: "Trong các hình sau, hình nào là hình tam giác?",
           type: "mc",
-          options: ["a", "b", "c"],
-          answer: "c",
-          visual: V("geoPickShapesRow", [
-            { kind: "trap", label: "a" },
-            { kind: "rect", label: "b" },
-            { kind: "triangle", label: "c" },
-          ]),
+          options: quiz.options,
+          answer: quiz.answer,
+          visual: quiz.visual,
           explainSteps: [
-            "Hình tam giác có 3 cạnh, 3 đỉnh.",
-            "Hình c có 3 cạnh → là hình tam giác.",
+            "Hình tam giác có đúng 3 cạnh, 3 đỉnh.",
+            "Chọn hình có 3 cạnh (đáp án " + quiz.answer + ").",
           ],
         });
       },
       function () {
-        // MathX: chọn hình chữ nhật
+        // HCN ≠ vuông; thoi dẹt + bình hành để tránh nhầm
+        var quiz = V("geoPickShapesQuiz", "rect", [
+          "square",
+          "diamond",
+          "para",
+          "triangle",
+          "trap",
+        ]);
+        if (!quiz) {
+          return q({
+            topicId: tid(week),
+            level: level,
+            week: week,
+            text: "Hình chữ nhật có bao nhiêu góc vuông?",
+            type: "mc",
+            options: ["2", "3", "4", "5"],
+            answer: "4",
+            visual: V("geoRect", true, null, null),
+          });
+        }
         return q({
           topicId: tid(week),
           level: level,
           week: week,
-          text: "Hình nào dưới đây là hình chữ nhật (không phải hình vuông)?",
+          text: "Hình nào là hình chữ nhật (dài khác rộng, có góc vuông)?",
           type: "mc",
-          options: ["a", "b", "c", "d"],
-          answer: "a",
-          visual: V("geoPickShapesRow", [
-            { kind: "rect", label: "a" },
-            { kind: "square", label: "b" },
-            { kind: "diamond", label: "c" },
-            { kind: "triangle", label: "d" },
-          ]),
+          options: quiz.options,
+          answer: quiz.answer,
+          visual: quiz.visual,
           explainSteps: [
             "Hình chữ nhật: 4 góc vuông, chiều dài khác chiều rộng.",
-            "Hình a là hình chữ nhật. Hình b là hình vuông (trường hợp đặc biệt).",
+            "Không chọn hình vuông (4 cạnh bằng) hay hình thoi dẹt (không có góc vuông).",
+            "Đáp án: " + quiz.answer + ".",
           ],
         });
       },
       function () {
+        // Vuông vs thoi dẹt — thoi dẹt ngang, vuông có dấu góc + gạch cạnh
+        var quiz = V("geoPickShapesQuiz", "square", [
+          "diamond",
+          "para",
+          "rect",
+          "trap",
+          "right-tri",
+        ]);
+        if (!quiz) {
+          return q({
+            topicId: tid(week),
+            level: level,
+            week: week,
+            text: "Hình vuông có bao nhiêu cạnh bằng nhau?",
+            type: "mc",
+            options: ["2", "3", "4", "5"],
+            answer: "4",
+            visual: V("geoSquare", true, null),
+          });
+        }
         return q({
           topicId: tid(week),
           level: level,
           week: week,
-          text: "Hình nào dưới đây là hình vuông?",
+          text: "Hình nào là hình vuông? (4 cạnh bằng + 4 góc vuông)",
           type: "mc",
-          options: ["a", "b", "c", "d"],
-          answer: "b",
-          visual: V("geoPickShapesRow", [
-            { kind: "rect", label: "a" },
-            { kind: "square", label: "b" },
-            { kind: "diamond", label: "c" },
-            { kind: "triangle", label: "d" },
-          ]),
-          explain: "Hình vuông: 4 cạnh bằng nhau và 4 góc vuông → hình b.",
+          options: quiz.options,
+          answer: quiz.answer,
+          visual: quiz.visual,
+          explainSteps: [
+            "Hình vuông đứng thẳng, 4 cạnh bằng, có dấu góc vuông.",
+            "Hình thoi dẹt ngang không phải hình vuông (dù 4 cạnh bằng nhau).",
+            "Đáp án: " + quiz.answer + ".",
+          ],
+        });
+      },
+      function () {
+        // Nhận biết hình thoi dẹt (không phải vuông)
+        var quiz = V("geoPickShapesQuiz", "diamond", [
+          "square",
+          "rect",
+          "triangle",
+          "trap",
+          "circle",
+        ]);
+        if (!quiz) {
+          return q({
+            topicId: tid(week),
+            level: level,
+            week: week,
+            text: "Hình thoi khác hình vuông ở điểm nào?",
+            type: "mc",
+            options: [
+              "Hình thoi thường không có góc vuông",
+              "Hình thoi có 3 cạnh",
+              "Hình thoi là hình tròn",
+              "Hình thoi luôn có góc vuông",
+            ],
+            answer: "Hình thoi thường không có góc vuông",
+            visual: V("geoPickShapesRow", [
+              { kind: "diamond", label: "a" },
+              { kind: "square", label: "b" },
+            ]),
+          });
+        }
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Hình nào là hình thoi (dẹt, không có góc vuông)?",
+          type: "mc",
+          options: quiz.options,
+          answer: quiz.answer,
+          visual: quiz.visual,
+          explainSteps: [
+            "Hình thoi có 4 cạnh bằng nhau nhưng thường không có góc vuông.",
+            "Hình thoi trên đề được vẽ dẹt ngang — khác hẳn hình vuông đứng.",
+            "Đáp án: " + quiz.answer + ".",
+          ],
+        });
+      },
+      function () {
+        var quiz = V("geoPickShapesQuiz", "circle", [
+          "square",
+          "triangle",
+          "rect",
+          "trap",
+        ]);
+        if (!quiz) {
+          return q({
+            topicId: tid(week),
+            level: level,
+            week: week,
+            text: "Hình tròn có cạnh thẳng không?",
+            type: "mc",
+            options: ["Không", "Có 1 cạnh", "Có 4 cạnh", "Có 3 cạnh"],
+            answer: "Không",
+            visual: V("geoCircle", false, false, null, null),
+          });
+        }
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Hình nào là hình tròn?",
+          type: "mc",
+          options: quiz.options,
+          answer: quiz.answer,
+          visual: quiz.visual,
+          explain: "Hình tròn không có cạnh thẳng. Đáp án: " + quiz.answer + ".",
         });
       },
       function () {
