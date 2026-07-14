@@ -264,10 +264,10 @@ const TOPICS = (function () {
     id: "mathx-gk1",
     emoji: "📋",
     name: "Giữa kỳ I",
-    desc: "Ôn tập · Đề kiểm tra giữa HK1 (sau tuần 9) · CB / NC",
+    desc: "Ôn tập · Đề kiểm tra giữa HK1 (sau tuần 9) · 20 câu · CB / NC",
     content: [
       "Ôn tập nội dung tuần 1–9",
-      "Đề ôn / đề kiểm tra giữa kỳ I",
+      "Đề ôn / đề kiểm tra giữa kỳ I · 20 câu",
     ],
     color: "#1D4ED8",
     mathxExam: "gk1",

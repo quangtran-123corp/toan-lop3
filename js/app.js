@@ -155,14 +155,38 @@ function renderHome() {
   });
 }
 
+/** Số câu mặc định theo đề (ôn kiểm tra giữa kỳ I = 20 câu) */
+function defaultQuestionCount(topicId) {
+  if (topicId === "mathx-gk1") return 20;
+  return 0; // 0 = dùng lựa chọn trên màn hình
+}
+
 function openDiff(topicId) {
   session = { topicId, level: null, questions: [], index: 0, correct: 0, stars: 0 };
   const topic = getTopic(topicId);
   $("#diff-topic-name").textContent = `${topic.emoji} ${topic.name}`;
+  const countSel = $("#q-count");
+  const forced = defaultQuestionCount(topicId);
+  if (countSel && forced) {
+    countSel.value = String(forced);
+  }
+  // Gợi ý số câu đề kiểm tra
+  const countLabel = document.querySelector(".count-picker label");
+  if (countLabel) {
+    countLabel.textContent = forced
+      ? "Số câu đề này (cố định " + forced + "):"
+      : "Số câu mỗi lần:";
+  }
+  if (countSel) {
+    countSel.disabled = !!forced;
+  }
   showScreen("diff");
 }
 
 function startPractice(topicId, level, count) {
+  const forced = defaultQuestionCount(topicId);
+  if (forced) count = forced;
+  count = Math.max(1, Math.min(30, Number(count) || 10));
   const questions = generateSession(topicId, level, count);
   session = {
     topicId,
@@ -717,7 +741,8 @@ function bindEvents() {
   $$(".diff-card").forEach((card) => {
     card.addEventListener("click", () => {
       const level = card.dataset.level;
-      const count = Number($("#q-count").value) || 10;
+      const forced = defaultQuestionCount(session.topicId);
+      const count = forced || Number($("#q-count").value) || 10;
       startPractice(session.topicId, level, count);
     });
   });
