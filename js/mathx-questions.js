@@ -479,9 +479,9 @@
         });
       },
       function () {
-        var w = rand(4, 12);
-        var k = pick([2, 3, 4]);
-        var L = w * k;
+        // Trước T10/T11: không chia số 2 chữ số — cho sẵn dài & rộng, chỉ cộng
+        var L = rand(5, 12);
+        var w = rand(2, Math.min(9, L - 1));
         return q({
           topicId: tid(week),
           level: level,
@@ -489,14 +489,40 @@
           text:
             "Hình chữ nhật dài " +
             L +
-            " cm, dài gấp " +
-            k +
-            " lần rộng. Tổng chiều dài và chiều rộng là:",
-          type: "input",
+            " cm, rộng " +
+            w +
+            " cm. Tổng chiều dài và chiều rộng là:",
+          type: "mc",
+          options: numMc(L + w, 4),
           answer: L + w,
           explainSteps: [
-            "Chiều rộng = chiều dài : " + k + " = " + L + " : " + k + " = " + w + " cm.",
+            "Đề đã cho cả chiều dài và chiều rộng.",
             "Tổng = " + L + " + " + w + " = " + (L + w) + " cm.",
+          ],
+          explainTip: "Chỉ cần cộng — chưa cần chia để tìm cạnh.",
+        });
+      },
+      function () {
+        // Cho rộng + gấp k lần → tìm dài (bảng nhân)
+        var w = rand(2, 9);
+        var k = pick([2, 3, 4, 5]);
+        var L = w * k;
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text:
+            "Hình chữ nhật rộng " +
+            w +
+            " cm, dài gấp " +
+            k +
+            " lần rộng. Chiều dài là:",
+          type: "mc",
+          options: numMc(L, 5),
+          answer: L,
+          explainSteps: [
+            "Dài gấp " + k + " lần rộng → nhân (bảng nhân " + k + ").",
+            "Dài = " + w + " × " + k + " = " + L + " cm.",
           ],
         });
       },
@@ -1699,7 +1725,11 @@
   }
 
   function genHinhPhangKhoi(week, level) {
-    return pick([
+    // Tuần 4 & 9: nhận biết hình phẳng / khối.
+    // Chưa học "gấp một số lên n lần" (T10) và chia số 2 chữ số (T11)
+    // → không ra dạng "dài 48, gấp 4 lần rộng → chia 48:4".
+    var early = !week || week < 10;
+    var bank = [
       function () {
         return q({
           topicId: tid(week),
@@ -1710,6 +1740,38 @@
           options: ["3 cạnh, 3 đỉnh", "4 cạnh, 4 đỉnh", "3 cạnh, 4 đỉnh", "4 cạnh, 3 đỉnh"],
           answer: "3 cạnh, 3 đỉnh",
           explain: "Tam giác: 3 cạnh, 3 đỉnh.",
+        });
+      },
+      function () {
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Hình tứ giác có bao nhiêu cạnh?",
+          type: "mc",
+          options: ["3", "4", "5", "6"],
+          answer: "4",
+          explain: "Tứ giác: 4 cạnh, 4 đỉnh.",
+        });
+      },
+      function () {
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Hình vuông khác hình chữ nhật ở điểm nào?",
+          type: "mc",
+          options: [
+            "Hình vuông có 4 cạnh bằng nhau",
+            "Hình vuông có 3 góc vuông",
+            "Hình vuông có 3 cạnh",
+            "Hình chữ nhật không có góc vuông",
+          ],
+          answer: "Hình vuông có 4 cạnh bằng nhau",
+          explainSteps: [
+            "Cả hai đều có 4 góc vuông.",
+            "Hình vuông: 4 cạnh bằng nhau. Hình chữ nhật: chiều dài và chiều rộng có thể khác nhau.",
+          ],
         });
       },
       function () {
@@ -1729,6 +1791,18 @@
           topicId: tid(week),
           level: level,
           week: week,
+          text: "Khối lập phương có bao nhiêu cạnh?",
+          type: "mc",
+          options: ["6", "8", "12", "4"],
+          answer: "12",
+          explain: "Lập phương: 12 cạnh bằng nhau, 8 đỉnh, 6 mặt vuông.",
+        });
+      },
+      function () {
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
           text: "Các mặt của khối hộp chữ nhật là hình gì?",
           type: "mc",
           options: ["Hình chữ nhật", "Hình tròn", "Hình tam giác", "Hình thoi"],
@@ -1737,8 +1811,79 @@
         });
       },
       function () {
-        var w = rand(4, 12);
-        var k = pick([2, 3, 4]);
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Mỗi khối lập phương có mấy mặt? Mỗi mặt là hình gì?",
+          type: "mc",
+          options: [
+            "6 mặt hình vuông",
+            "4 mặt hình vuông",
+            "6 mặt hình tròn",
+            "8 mặt hình chữ nhật",
+          ],
+          answer: "6 mặt hình vuông",
+          explain: "Lập phương: 6 mặt vuông bằng nhau.",
+        });
+      },
+    ];
+
+    if (early) {
+      // Chỉ cộng / bảng nhân đã học — không chia số 2 chữ số
+      bank.push(function () {
+        var L = rand(5, 12);
+        var w = rand(2, Math.min(9, L - 1));
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text:
+            "HCN dài " +
+            L +
+            " cm, rộng " +
+            w +
+            " cm. Tổng dài + rộng là:",
+          type: "mc",
+          options: numMc(L + w, 4),
+          answer: L + w,
+          explainSteps: [
+            "Đề đã cho cả chiều dài và chiều rộng.",
+            "Tổng = " + L + " + " + w + " = " + (L + w) + " cm.",
+          ],
+          explainTip: "Tuần 9: cộng hai số đã biết — chưa cần chia.",
+        });
+      });
+      bank.push(function () {
+        // Cho rộng + gấp k lần → tìm dài (nhân bảng 2–9)
+        var w = rand(2, 9);
+        var k = pick([2, 3, 4, 5]);
+        var L = w * k; // trong bảng nhân
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text:
+            "HCN rộng " +
+            w +
+            " cm, dài gấp " +
+            k +
+            " lần rộng. Chiều dài là:",
+          type: "mc",
+          options: numMc(L, 5),
+          answer: L,
+          explainSteps: [
+            "Dài gấp " + k + " lần rộng → nhân (bảng nhân " + k + ").",
+            "Dài = " + w + " × " + k + " = " + L + " cm.",
+          ],
+          explainTip: "Gấp n lần = nhân với n (dùng bảng nhân).",
+        });
+      });
+    } else {
+      // Từ T10: có thể tìm rộng từ dài (chia), số vẫn trong bảng nhân
+      bank.push(function () {
+        var w = level === "advanced" ? rand(4, 12) : rand(3, 9);
+        var k = pick([2, 3, 4, 5]);
         var L = w * k;
         return q({
           topicId: tid(week),
@@ -1750,15 +1895,18 @@
             " cm, dài gấp " +
             k +
             " lần rộng. Tổng dài + rộng là:",
-          type: "input",
+          type: level === "advanced" ? "input" : "mc",
+          options: numMc(L + w, 6),
           answer: L + w,
           explainSteps: [
             "Rộng = " + L + " : " + k + " = " + w + " cm.",
             "Tổng = " + L + " + " + w + " = " + (L + w) + " cm.",
           ],
         });
-      },
-    ])();
+      });
+    }
+
+    return pick(bank)();
   }
 
   function genNhan2ChuSo(week, level) {
