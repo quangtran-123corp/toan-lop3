@@ -1274,27 +1274,29 @@ function genHinhHoc(level) {
       });
     }
     if (mode === "radius") {
-      var r0 = rand(2, 15);
+      // Cơ bản: chỉ bảng nhân 2 (r = 2–9), tránh nhân số 2 chữ số
+      var r0 = rand(2, 9);
       return q({
         topicId: "hinh-hoc",
         level: level,
         text: "Hình tròn có bán kính " + r0 + " cm (đoạn đỏ OA). Đường kính bằng bao nhiêu cm?",
         type: "mc",
-        options: numMc(r0 * 2, 5),
+        options: numMc(r0 * 2, 4),
         answer: r0 * 2,
-        explain: "Đường kính = 2 × bán kính = " + r0 * 2 + " cm",
+        explain: "Đường kính = 2 × bán kính = " + r0 * 2 + " cm (bảng nhân 2)",
         visual: geoCircle(true, false, "r = " + r0 + " cm", null),
       });
     }
-    var d0 = pick([6, 8, 10, 12, 14, 16, 20, 24]);
+    // d chẵn 4–18 → r 1 chữ số, chỉ cần bảng chia 2
+    var d0 = pick([4, 6, 8, 10, 12, 14, 16, 18]);
     return q({
       topicId: "hinh-hoc",
       level: level,
       text: "Hình tròn có đường kính AB = " + d0 + " cm. Bán kính bằng bao nhiêu cm?",
       type: "mc",
-      options: numMc(d0 / 2, 4),
+      options: numMc(d0 / 2, 3),
       answer: d0 / 2,
-      explain: "Bán kính = đường kính : 2 = " + d0 / 2 + " cm",
+      explain: "Bán kính = đường kính : 2 = " + d0 / 2 + " cm (bảng chia 2)",
       visual: geoCircle(false, true, null, "d = " + d0 + " cm"),
     });
   }
@@ -1334,7 +1336,8 @@ function genHinhHoc(level) {
     });
   }
   if (modeA === "radius") {
-    var r = rand(3, 18);
+    // Nâng cao hình học: vẫn ưu tiên bảng nhân 2 (r ≤ 9); đôi khi r 10–12 sau khi đã quen
+    var r = Math.random() < 0.7 ? rand(3, 9) : rand(10, 12);
     return q({
       topicId: "hinh-hoc",
       level: level,
@@ -1346,8 +1349,8 @@ function genHinhHoc(level) {
     });
   }
   if (modeA === "diam") {
-    var diam = rand(8, 30);
-    if (diam % 2 !== 0) diam += 1;
+    // Ưu tiên d chẵn trong bảng chia 2 (≤ 18); thỉnh thoảng 20–24
+    var diam = Math.random() < 0.75 ? pick([8, 10, 12, 14, 16, 18]) : pick([20, 22, 24]);
     return q({
       topicId: "hinh-hoc",
       level: level,

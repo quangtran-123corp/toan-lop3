@@ -1625,33 +1625,49 @@
   }
 
   function genHinhTron(week, level) {
+    // Tuần 8 (và trước T10/T11): chưa học nhân/chia số có 2 chữ số.
+    // Chỉ dùng bảng nhân/chia 2: bán kính 2–9 → đường kính 4–18.
+    // Từ tuần 10 trở đi mới cho số lớn hơn (ôn / nâng cao).
+    var early = !week || week < 10;
     if (Math.random() < 0.5) {
-      var r = rand(3, 15);
+      var r = early
+        ? rand(2, 9)
+        : level === "advanced"
+          ? rand(5, 18)
+          : rand(3, 12);
       return q({
         topicId: tid(week),
         level: level,
         week: week,
         text: "Hình tròn bán kính " + r + " cm. Đường kính bằng:",
         type: "mc",
-        options: numMc(r * 2, 6),
+        options: numMc(r * 2, early ? 4 : 6),
         answer: r * 2,
         explainSteps: [
           "Đường kính = 2 × bán kính.",
-          "2 × " + r + " = " + r * 2 + " cm.",
+          "2 × " + r + " = " + r * 2 + " cm" + (early ? " (bảng nhân 2)." : "."),
         ],
-        explainTip: "d = 2r · r = d : 2.",
+        explainTip: "d = 2 × r · r = d : 2. Tuần 8 chỉ cần bảng nhân/chia 2.",
       });
     }
-    var d = pick([6, 8, 10, 12, 14, 16, 20]);
+    var d = early
+      ? pick([4, 6, 8, 10, 12, 14, 16, 18])
+      : level === "advanced"
+        ? pick([8, 10, 12, 14, 16, 18, 20, 24, 30])
+        : pick([6, 8, 10, 12, 14, 16, 18, 20]);
     return q({
       topicId: tid(week),
       level: level,
       week: week,
       text: "Hình tròn đường kính " + d + " cm. Bán kính bằng:",
       type: "mc",
-      options: numMc(d / 2, 4),
+      options: numMc(d / 2, early ? 3 : 4),
       answer: d / 2,
-      explain: "Bán kính = đường kính : 2 = " + d / 2 + " cm.",
+      explainSteps: [
+        "Bán kính = đường kính : 2.",
+        d + " : 2 = " + d / 2 + " cm" + (early ? " (bảng chia 2)." : "."),
+      ],
+      explainTip: "r = d : 2. Tuần 8 chỉ cần bảng chia 2.",
     });
   }
 
