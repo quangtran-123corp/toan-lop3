@@ -102,11 +102,15 @@ function showCharacterReward(info) {
   }
 
   $("#reward-sub").textContent = info.isNew
-    ? "Bé làm đúng hết — nhận 1 nhân vật mới!"
-    : "Bé làm đúng hết! (Bộ sưu tập đã đủ nhân vật này rồi, vẫn siêu đỉnh!)";
+    ? "Bé làm đúng hết — nhận 1 nhân vật Zootopia mới!"
+    : "Bé làm đúng hết! (Bộ sưu tập đã có nhân vật này rồi, vẫn siêu đỉnh!)";
   const charEl = $("#reward-char");
   charEl.style.setProperty("--c", ch.color || "#4F46E5");
-  charEl.textContent = ch.emoji;
+  if (ch.img) {
+    charEl.innerHTML = '<img src="' + ch.img + '" alt="' + ch.name + '" class="reward-char-img">';
+  } else {
+    charEl.textContent = ch.emoji;
+  }
   $("#reward-name").textContent = ch.name;
   $("#reward-blurb").textContent = ch.blurb || "";
   $("#reward-progress").textContent =

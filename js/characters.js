@@ -1,95 +1,107 @@
 /**
- * Bộ sưu tập nhân vật — thưởng khi bé làm đúng 100% một phiên.
+ * Bộ sưu tập nhân vật Zootopia — thưởng khi bé làm đúng 100% một phiên.
  * Đủ 10 nhân vật → Ba chở đi mua sữa chua 🍦
  */
 (function (global) {
   var YOGURT_GOAL = 10;
 
-  /** Danh sách nhân vật dễ thương (tên thân thuộc với bé Việt) */
+  /** Danh sách nhân vật Zootopia (bé yêu thích!) */
   var CHARACTERS = [
     {
-      id: "doraemon",
-      name: "Doraemon",
-      emoji: "🤖",
+      id: "judy-hopps",
+      name: "Judy Hopps",
+      emoji: "🐰",
+      img: "award/judy.png",
+      color: "#7C3AED",
+      blurb: "Cô thỏ cảnh sát dũng cảm, không bao giờ bỏ cuộc!",
+    },
+    {
+      id: "nick-wilde",
+      name: "Nick Wilde",
+      emoji: "🦊",
+      img: "award/hi-its-the-real-nick-wilde-ask-me-anything-v0-n5qplbkl5xac1.webp",
+      color: "#EA580C",
+      blurb: "Chú cáo thông minh, bạn thân của Judy.",
+    },
+    {
+      id: "judy-nick-selfie",
+      name: "Judy & Nick",
+      emoji: "📸",
+      img: "award/avatar-tho-va-cao-doi-4.webp",
+      color: "#2563EB",
+      blurb: "Cặp đôi hoàn hảo — cùng nhau chiến thắng!",
+    },
+    {
+      id: "judy-zootopia",
+      name: "Judy Zootopia",
+      emoji: "🌆",
+      img: "award/avatar-zootopia-20.jpg",
+      color: "#0891B2",
+      blurb: "Judy vui vẻ chào đón Bé tới Zootopia!",
+    },
+    {
+      id: "judy-police",
+      name: "Judy Cảnh sát",
+      emoji: "👮",
+      img: "award/image.jpg",
+      color: "#4F46E5",
+      blurb: "Sĩ quan Hopps sẵn sàng bảo vệ thành phố!",
+    },
+    {
+      id: "judy-determined",
+      name: "Judy Quyết tâm",
+      emoji: "💪",
+      img: "award/images.jfif",
+      color: "#1D4ED8",
+      blurb: "Dù khó khăn, Judy luôn kiên cường!",
+    },
+    {
+      id: "judy-salute",
+      name: "Judy Chào",
+      emoji: "🎖️",
+      img: "award/images (1).jfif",
+      color: "#1E40AF",
+      blurb: "Sĩ quan Judy chào Bé — Bé làm tốt lắm!",
+    },
+    {
+      id: "judy-cute",
+      name: "Judy Dễ thương",
+      emoji: "🥰",
+      img: "award/images (2).jfif",
       color: "#3B82F6",
-      blurb: "Mèo máy túi thần kỳ từ tương lai!",
+      blurb: "Judy nhìn trộm — Bé thật đáng yêu!",
     },
     {
-      id: "nobita",
-      name: "Nobita",
-      emoji: "👓",
-      color: "#F59E0B",
-      blurb: "Bạn thân của Doraemon, hay ngủ nướng.",
+      id: "judy-sweet",
+      name: "Judy Ngọt ngào",
+      emoji: "💜",
+      img: "award/images (3).jfif",
+      color: "#6D28D9",
+      blurb: "Judy tự hào vì Bé đã cố gắng!",
     },
     {
-      id: "shizuka",
-      name: "Xuka",
-      emoji: "🎀",
-      color: "#EC4899",
-      blurb: "Dịu dàng, chăm chỉ và tốt bụng.",
+      id: "judy-carrot",
+      name: "Judy & Cà Rốt",
+      emoji: "🥕",
+      img: "award/tumblr_3c565f4f3628962ec93c8e8ea7ce6119_5f366adb_1280.jpg",
+      color: "#F97316",
+      blurb: "Judy cầm cà rốt — phần thưởng cho Bé giỏi!",
     },
     {
-      id: "gian",
-      name: "Chaien",
-      emoji: "🎤",
-      color: "#EF4444",
-      blurb: "To lớn, thích hát (hơi... to)!",
+      id: "judy-nick-duo-1",
+      name: "Đội Judy & Nick",
+      emoji: "🤝",
+      img: "award/1784349949633_1745451039232600407_g2553855885846108703_740d399bd15c271c2b7a836e90a41d00.jpg",
+      color: "#059669",
+      blurb: "Hai bạn cùng nhau — không gì ngăn cản!",
     },
     {
-      id: "suneo",
-      name: "Suneo",
-      emoji: "💎",
-      color: "#8B5CF6",
-      blurb: "Hay khoe đồ mới, nhưng vẫn là bạn.",
-    },
-    {
-      id: "dorami",
-      name: "Dorami",
-      emoji: "💛",
-      color: "#EAB308",
-      blurb: "Em gái đáng yêu của Doraemon.",
-    },
-    {
-      id: "dekisugi",
-      name: "Dekisugi",
-      emoji: "📚",
+      id: "judy-nick-duo-2",
+      name: "Phiêu lưu cùng nhau",
+      emoji: "🎬",
+      img: "award/1784350028603_1745451039232600407_g2553855885846108703_8750ee223b38304890c83b97325eec5d.jpg",
       color: "#10B981",
-      blurb: "Học giỏi, luôn sẵn sàng giúp bạn.",
-    },
-    {
-      id: "jaiko",
-      name: "Jaiko",
-      emoji: "✏️",
-      color: "#F472B6",
-      blurb: "Em gái Chaien, thích vẽ truyện tranh.",
-    },
-    {
-      id: "miichan",
-      name: "Mi-chan",
-      emoji: "🐱",
-      color: "#FB923C",
-      blurb: "Chú mèo cưng của Xuka.",
-    },
-    {
-      id: "mini-dora",
-      name: "Mini-Dora",
-      emoji: "🔵",
-      color: "#60A5FA",
-      blurb: "Bảo bối nhỏ xinh xắn!",
-    },
-    {
-      id: "take-copter",
-      name: "Chong chóng tre",
-      emoji: "🚁",
-      color: "#14B8A6",
-      blurb: "Bay lượn khắp nơi cùng bạn bè.",
-    },
-    {
-      id: "time-machine",
-      name: "Cỗ máy thời gian",
-      emoji: "🕰️",
-      color: "#6366F1",
-      blurb: "Du hành quá khứ – tương lai!",
+      blurb: "Hành trình phiêu lưu đang chờ Bé phía trước!",
     },
   ];
 
@@ -157,6 +169,18 @@
     };
   }
 
+  function charImgHtml(c, size) {
+    size = size || 48;
+    if (c.img) {
+      return (
+        '<img src="' + c.img + '" alt="' + c.name + '" ' +
+        'class="char-img" style="width:' + size + 'px;height:' + size + 'px;" ' +
+        'loading="lazy">'
+      );
+    }
+    return '<span class="char-emoji">' + c.emoji + '</span>';
+  }
+
   function collectionHtml(state) {
     var owned = {};
     ownedList(state).forEach(function (id) {
@@ -173,9 +197,11 @@
         '" title="' +
         (got ? c.name + " — " + c.blurb : "Chưa mở") +
         '">' +
-        '<span class="char-emoji">' +
-        (got ? c.emoji : "❓") +
-        "</span>" +
+        '<div class="char-avatar">' +
+        (got
+          ? charImgHtml(c, 48)
+          : '<span class="char-emoji">❓</span>') +
+        "</div>" +
         '<span class="char-name">' +
         (got ? c.name : "???") +
         "</span></div>"
@@ -196,13 +222,13 @@
     return (
       '<div class="char-collection">' +
       '<div class="char-head">' +
-      "<h3>🎁 Bộ sưu tập nhân vật</h3>" +
+      "<h3>🎁 Bộ sưu tập Zootopia</h3>" +
       '<span class="char-count">' +
       count +
       "/" +
       CHARACTERS.length +
       "</span></div>" +
-      '<p class="char-hint">Làm đúng <strong>100%</strong> một bài để nhận 1 nhân vật mới!</p>' +
+      '<p class="char-hint">Làm đúng <strong>100%</strong> một bài để nhận 1 nhân vật Zootopia mới!</p>' +
       '<div class="char-grid">' +
       cells +
       "</div>" +
@@ -218,5 +244,6 @@
     ownedCount: ownedCount,
     awardPerfect: awardPerfect,
     collectionHtml: collectionHtml,
+    charImgHtml: charImgHtml,
   };
 })(typeof window !== "undefined" ? window : this);
