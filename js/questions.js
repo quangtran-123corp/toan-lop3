@@ -520,117 +520,164 @@ function genBangNhanChia(level) {
 }
 
 function genNhanChiaLon(level) {
+  /* ⚠️ Tuần 9: bé CHỈ học bảng nhân/chia 1 chữ số × 1 chữ số (2–9).
+     Chưa học nhân/chia số 2 chữ số. Nội dung chủ đề này phải nằm
+     trong phạm vi bảng cửu chương. */
   if (level === "basic") {
-    if (Math.random() < 0.5) {
-      var a = rand(12, 48);
-      var b = rand(2, 5);
+    var mode = pick(["mul", "div", "mulWord", "divWord"]);
+    if (mode === "mul") {
+      var a = rand(2, 9);
+      var b = rand(2, 9);
       return q({
         topicId: "nhan-chia-lon",
         level: level,
         text: a + " × " + b + " = ?",
         type: "mc",
-        options: numMc(a * b, 15),
+        options: numMc(a * b, 8),
         answer: a * b,
         explain: a + " × " + b + " = " + a * b,
       });
     }
-    var bb = rand(2, 6);
-    var qv = rand(11, 35);
-    var aa = bb * qv;
+    if (mode === "div") {
+      var n = rand(2, 9);
+      var m = rand(2, 9);
+      var product = n * m;
+      return q({
+        topicId: "nhan-chia-lon",
+        level: level,
+        text: product + " : " + n + " = ?",
+        type: "mc",
+        options: numMc(m, 5),
+        answer: m,
+        explain: product + " : " + n + " = " + m + " vì " + n + " × " + m + " = " + product,
+      });
+    }
+    if (mode === "mulWord") {
+      var each = rand(3, 9);
+      var groups = rand(2, 9);
+      return q({
+        topicId: "nhan-chia-lon",
+        level: level,
+        text: "Mỗi túi có " + each + " quả cam. Có " + groups + " túi. Hỏi có tất cả bao nhiêu quả cam?",
+        type: "mc",
+        options: numMc(each * groups, 8),
+        answer: each * groups,
+        explain: each + " × " + groups + " = " + each * groups,
+      });
+    }
+    var total2 = rand(3, 9) * rand(3, 9);
+    var div2 = pick([2, 3, 4, 5, 6, 7, 8, 9].filter(function(x) { return total2 % x === 0; })) || 2;
     return q({
       topicId: "nhan-chia-lon",
       level: level,
-      text: aa + " : " + bb + " = ?",
+      text: "Chia " + total2 + " viên bi đều cho " + div2 + " bạn. Mỗi bạn được bao nhiêu viên?",
       type: "mc",
-      options: numMc(qv, 8),
-      answer: qv,
-      explain: aa + " : " + bb + " = " + qv,
+      options: numMc(total2 / div2, 4),
+      answer: total2 / div2,
+      explain: total2 + " : " + div2 + " = " + total2 / div2,
     });
   }
 
-  var mode = pick(["mul3dig", "div3dig", "mulAdd", "remain", "wordBig", "findDiv"]);
-  if (mode === "mul3dig") {
-    var m1 = rand(102, 498);
-    var m2 = rand(3, 9);
+  /* Nâng cao: vẫn trong phạm vi bảng cửu chương,
+     nhưng nhiều bước, tìm X, chia có dư, so sánh tích */
+  var modeA = pick(["chain", "findX", "divRem", "mixedOps", "wordHard", "compareProd"]);
+  if (modeA === "chain") {
+    var ca = rand(2, 9);
+    var cb = rand(2, 9);
+    var cc = rand(2, 5);
     return q({
       topicId: "nhan-chia-lon",
       level: level,
-      text: m1 + " × " + m2 + " = ?",
+      text: ca + " × " + cb + " × " + cc + " = ?",
       type: "input",
-      answer: m1 * m2,
-      explain: m1 + " × " + m2 + " = " + (m1 * m2),
+      answer: ca * cb * cc,
+      explain: ca + " × " + cb + " = " + (ca * cb) + "; " + (ca * cb) + " × " + cc + " = " + (ca * cb * cc),
     });
   }
-  if (mode === "div3dig") {
-    var d2 = rand(3, 9);
-    var dq = rand(50, 150);
-    var d1 = d2 * dq;
+  if (modeA === "findX") {
+    var fx1 = rand(3, 9);
+    var fx2 = rand(3, 9);
+    var fxProd = fx1 * fx2;
+    if (Math.random() < 0.5) {
+      return q({
+        topicId: "nhan-chia-lon",
+        level: level,
+        text: "☐ × " + fx1 + " = " + fxProd + ". Tìm số trong ô trống.",
+        type: "input",
+        answer: fx2,
+        explain: fxProd + " : " + fx1 + " = " + fx2,
+      });
+    }
     return q({
       topicId: "nhan-chia-lon",
       level: level,
-      text: d1 + " : " + d2 + " = ?",
+      text: fxProd + " : ☐ = " + fx2 + ". Tìm số trong ô trống.",
+      type: "input",
+      answer: fx1,
+      explain: fxProd + " : " + fx2 + " = " + fx1,
+    });
+  }
+  if (modeA === "divRem") {
+    var dv = rand(3, 9);
+    var dq = rand(2, 9);
+    var dr = rand(1, dv - 1);
+    var dTotal = dv * dq + dr;
+    return q({
+      topicId: "nhan-chia-lon",
+      level: level,
+      text: dTotal + " chia cho " + dv + " được thương bao nhiêu, dư bao nhiêu? (nhập thương)",
       type: "input",
       answer: dq,
-      explain: d1 + " : " + d2 + " = " + dq,
+      explain: dTotal + " = " + dv + " × " + dq + " + " + dr + " → thương " + dq + " dư " + dr,
+      explainTip: "Số dư là " + dr,
     });
   }
-  if (mode === "mulAdd") {
-    var maA = rand(25, 99);
-    var maB = rand(3, 7);
-    var maC = rand(20, 80);
-    var maD = rand(2, 6);
-    var maAns = maA * maB + maC * maD;
+  if (modeA === "mixedOps") {
+    var ma = rand(3, 9);
+    var mb = rand(3, 9);
+    var sub = rand(3, 15);
+    var mResult = ma * mb - sub;
     return q({
       topicId: "nhan-chia-lon",
       level: level,
-      text: maA + " × " + maB + " + " + maC + " × " + maD + " = ?",
+      text: ma + " × " + mb + " − " + sub + " = ?",
       type: "input",
-      answer: maAns,
-      explain: maA + " × " + maB + " = " + (maA * maB) + "; " + maC + " × " + maD + " = " + (maC * maD) + "; tổng = " + maAns,
+      answer: mResult,
+      explain: ma + " × " + mb + " = " + (ma * mb) + "; " + (ma * mb) + " − " + sub + " = " + mResult,
     });
   }
-  if (mode === "remain") {
-    var rb = rand(4, 9);
-    var rq = rand(30, 80);
-    var rr = rand(1, rb - 1);
-    var ra = rb * rq + rr;
-    return q({
-      topicId: "nhan-chia-lon",
-      level: level,
-      text: "Chia " + ra + " cho " + rb + ". Số dư là bao nhiêu?",
-      type: "input",
-      answer: rr,
-      explain: ra + " = " + rb + " × " + rq + " + " + rr + " → dư " + rr,
-    });
-  }
-  if (mode === "wordBig") {
-    var boxes = rand(3, 8);
-    var perBox = rand(24, 65);
-    var extra = rand(12, 45);
-    var wbAns = boxes * perBox + extra;
+  if (modeA === "wordHard") {
+    var wGap = rand(2, 5);
+    var wSmall = rand(3, 9);
+    var wBig = wSmall * wGap;
+    var wSum = wSmall + wBig;
     return q({
       topicId: "nhan-chia-lon",
       level: level,
       text:
-        "Kho có " + boxes + " thùng, mỗi thùng " + perBox +
-        " quyển sách, ngoài ra còn " + extra +
-        " quyển lẻ. Tất cả có bao nhiêu quyển sách?",
+        "Anh có số bi gấp " + wGap + " lần em. Em có " + wSmall +
+        " viên bi. Hỏi cả hai anh em có tất cả bao nhiêu viên bi?",
       type: "input",
-      answer: wbAns,
-      explain: boxes + " × " + perBox + " + " + extra + " = " + wbAns,
+      answer: wSum,
+      explain: "Anh: " + wSmall + " × " + wGap + " = " + wBig + "; tổng: " + wSmall + " + " + wBig + " = " + wSum,
     });
   }
-  // findDiv: tìm số bị chia
-  var fdDiv = rand(4, 9);
-  var fdQ = rand(30, 99);
-  var fdN = fdDiv * fdQ;
+  // compareProd: so sánh hai tích
+  var cA = rand(3, 9);
+  var cB = rand(3, 9);
+  var cC = rand(3, 9);
+  var cD = rand(3, 9);
+  var cLeft = cA * cB;
+  var cRight = cC * cD;
+  var cAns = cLeft > cRight ? ">" : cLeft < cRight ? "<" : "=";
   return q({
     topicId: "nhan-chia-lon",
     level: level,
-    text: "Một số chia cho " + fdDiv + " được " + fdQ + ". Số đó là bao nhiêu?",
-    type: "input",
-    answer: fdN,
-    explain: fdQ + " × " + fdDiv + " = " + fdN,
+    text: cA + " × " + cB + "  ___  " + cC + " × " + cD,
+    type: "mc",
+    options: [">", "<", "="],
+    answer: cAns,
+    explain: cLeft + " " + cAns + " " + cRight,
   });
 }
 

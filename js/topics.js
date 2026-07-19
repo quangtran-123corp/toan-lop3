@@ -364,8 +364,8 @@ const TOPICS = (function () {
     {
       id: "nhan-chia-lon",
       emoji: "🧮",
-      name: "Nhân · Chia số lớn",
-      desc: "Số 2–4 chữ số × / ÷ số 1 chữ số",
+      name: "Nhân · Chia nâng cao",
+      desc: "Bảng cửu chương: nhiều bước, tìm X, chia dư",
       color: "#EF4444",
     },
     {
