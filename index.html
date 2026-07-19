@@ -2797,58 +2797,102 @@ function genCongTru(level) {
     });
   }
 
-  var modeA = pick(["add4", "sub4", "chain", "word"]);
-  if (modeA === "add4") {
-    var a4 = rand(1000, 4500);
-    var b4 = rand(1000, 4500);
+  var modeA = pick(["add5", "sub5", "chain4", "findX", "word2step", "compare"]);
+  if (modeA === "add5") {
+    var a5 = rand(10000, 45000);
+    var b5 = rand(10000, 45000);
     return q({
       topicId: "cong-tru",
       level: level,
-      text: a4.toLocaleString("vi-VN") + " + " + b4.toLocaleString("vi-VN") + " = ?",
+      text: a5.toLocaleString("vi-VN") + " + " + b5.toLocaleString("vi-VN") + " = ?",
       type: "input",
-      answer: a4 + b4,
-      explain: a4 + " + " + b4 + " = " + (a4 + b4),
+      answer: a5 + b5,
+      explain: a5 + " + " + b5 + " = " + (a5 + b5),
     });
   }
-  if (modeA === "sub4") {
-    var s4a = rand(3000, 9000);
-    var s4b = rand(1000, s4a - 500);
+  if (modeA === "sub5") {
+    var s5a = rand(30000, 90000);
+    var s5b = rand(10000, s5a - 5000);
     return q({
       topicId: "cong-tru",
       level: level,
-      text: s4a.toLocaleString("vi-VN") + " − " + s4b.toLocaleString("vi-VN") + " = ?",
+      text: s5a.toLocaleString("vi-VN") + " − " + s5b.toLocaleString("vi-VN") + " = ?",
       type: "input",
-      answer: s4a - s4b,
-      explain: s4a + " − " + s4b + " = " + (s4a - s4b),
+      answer: s5a - s5b,
+      explain: s5a + " − " + s5b + " = " + (s5a - s5b),
     });
   }
-  if (modeA === "chain") {
-    var ca = rand(200, 600);
-    var cb = rand(50, 200);
-    var cc = rand(30, 150);
+  if (modeA === "chain4") {
+    var ca = rand(1000, 5000);
+    var cb = rand(500, 3000);
+    var cc = rand(200, 2000);
+    var cd = rand(100, 1500);
+    var chainAns = ca + cb - cc + cd;
     return q({
       topicId: "cong-tru",
       level: level,
-      text: ca + " + " + cb + " − " + cc + " = ?",
+      text: ca.toLocaleString("vi-VN") + " + " + cb.toLocaleString("vi-VN") + " − " + cc.toLocaleString("vi-VN") + " + " + cd.toLocaleString("vi-VN") + " = ?",
       type: "input",
-      answer: ca + cb - cc,
-      explain: "(" + ca + " + " + cb + ") − " + cc + " = " + (ca + cb - cc),
+      answer: chainAns,
+      explain: ca + " + " + cb + " − " + cc + " + " + cd + " = " + chainAns,
     });
   }
-  var buy = rand(250, 800);
-  var pay = buy + rand(50, 200);
+  if (modeA === "findX") {
+    var fx1 = rand(2000, 8000);
+    var fx2 = rand(1000, 5000);
+    var fxSum = fx1 + fx2;
+    var askPlus = Math.random() < 0.5;
+    if (askPlus) {
+      return q({
+        topicId: "cong-tru",
+        level: level,
+        text: "☐ + " + fx1.toLocaleString("vi-VN") + " = " + fxSum.toLocaleString("vi-VN") + ". Tìm số trong ô trống.",
+        type: "input",
+        answer: fx2,
+        explain: fxSum + " − " + fx1 + " = " + fx2,
+      });
+    }
+    return q({
+      topicId: "cong-tru",
+      level: level,
+      text: fxSum.toLocaleString("vi-VN") + " − ☐ = " + fx1.toLocaleString("vi-VN") + ". Tìm số trong ô trống.",
+      type: "input",
+      answer: fx2,
+      explain: fxSum + " − " + fx1 + " = " + fx2,
+    });
+  }
+  if (modeA === "word2step") {
+    var w1 = rand(3000, 8000);
+    var w2 = rand(1500, 4000);
+    var w3 = rand(500, 2000);
+    return q({
+      topicId: "cong-tru",
+      level: level,
+      text:
+        "Cửa hàng có " + w1.toLocaleString("vi-VN") + " kg gạo. Buổi sáng bán " +
+        w2.toLocaleString("vi-VN") + " kg, buổi chiều nhập thêm " +
+        w3.toLocaleString("vi-VN") + " kg. Hỏi cửa hàng còn bao nhiêu kg gạo?",
+      type: "input",
+      answer: w1 - w2 + w3,
+      explain: w1 + " − " + w2 + " + " + w3 + " = " + (w1 - w2 + w3),
+    });
+  }
+  // compare: so sánh biểu thức
+  var cmpA = rand(2000, 5000);
+  var cmpB = rand(1000, 3000);
+  var cmpC = rand(2000, 5000);
+  var cmpD = rand(1000, 3000);
+  var left = cmpA + cmpB;
+  var right = cmpC + cmpD;
+  var cmpAns = left > right ? ">" : left < right ? "<" : "=";
   return q({
     topicId: "cong-tru",
     level: level,
-    text:
-      "Mẹ mua đồ hết " +
-      buy +
-      " 000 đồng, đưa người bán " +
-      pay +
-      " 000 đồng. Cô bán trả lại bao nhiêu nghìn đồng?",
-    type: "input",
-    answer: pay - buy,
-    explain: pay + " − " + buy + " = " + (pay - buy) + " (nghìn đồng)",
+    text: cmpA.toLocaleString("vi-VN") + " + " + cmpB.toLocaleString("vi-VN") + "  ___  " + cmpC.toLocaleString("vi-VN") + " + " + cmpD.toLocaleString("vi-VN"),
+    type: "mc",
+    options: [">", "<", "="],
+    answer: cmpAns,
+    explain: left + " " + cmpAns + " " + right,
   });
 }
 
@@ -2879,57 +2923,93 @@ function genBangNhanChia(level) {
     });
   }
 
-  var mode = pick(["missing", "chain", "div", "double"]);
-  if (mode === "missing") {
-    var n2 = rand(3, 9);
-    var m2 = rand(3, 9);
-    var p2 = n2 * m2;
+  var mode = pick(["mixed", "chain3", "divRem", "gap", "wordMul", "compare"]);
+  if (mode === "mixed") {
+    var ma = rand(3, 9);
+    var mb = rand(3, 9);
+    var mc2 = rand(2, 8);
+    var md = rand(2, 6);
+    var mixAns = ma * mb + mc2 * md;
     return q({
       topicId: "bang-nhan-chia",
       level: level,
-      text: "☐ × " + n2 + " = " + p2 + ". Số trong ô trống là?",
+      text: ma + " × " + mb + " + " + mc2 + " × " + md + " = ?",
       type: "input",
-      answer: m2,
-      explain: p2 + " : " + n2 + " = " + m2,
+      answer: mixAns,
+      explain: ma + " × " + mb + " = " + (ma * mb) + "; " + mc2 + " × " + md + " = " + (mc2 * md) + "; tổng = " + mixAns,
     });
   }
-  if (mode === "chain") {
-    var a = rand(2, 6);
-    var b = rand(2, 6);
-    var c = rand(2, 5);
+  if (mode === "chain3") {
+    var ca = rand(3, 9);
+    var cb = rand(3, 9);
+    var cc = rand(2, 5);
     return q({
       topicId: "bang-nhan-chia",
       level: level,
-      text: a + " × " + b + " × " + c + " = ?",
+      text: ca + " × " + cb + " × " + cc + " = ?",
       type: "input",
-      answer: a * b * c,
-      explain: a + " × " + b + " = " + a * b + ", rồi × " + c + " = " + a * b * c,
+      answer: ca * cb * cc,
+      explain: ca + " × " + cb + " = " + (ca * cb) + ", rồi × " + cc + " = " + (ca * cb * cc),
     });
   }
-  if (mode === "div") {
-    var n3 = rand(4, 9);
-    var m3 = rand(4, 9);
-    var p3 = n3 * m3;
+  if (mode === "divRem") {
+    var dv = rand(3, 9);
+    var dq = rand(5, 9);
+    var dr = rand(1, dv - 1);
+    var dTotal = dv * dq + dr;
     return q({
       topicId: "bang-nhan-chia",
       level: level,
-      text: "Một số nhân với " + n3 + " được " + p3 + ". Số đó là?",
+      text: dTotal + " chia cho " + dv + " được thương bao nhiêu, dư bao nhiêu? (nhập thương)",
       type: "input",
-      answer: m3,
-      explain: p3 + " : " + n3 + " = " + m3,
+      answer: dq,
+      explain: dTotal + " = " + dv + " × " + dq + " + " + dr + " → thương " + dq + " dư " + dr,
+      explainTip: "Số dư là " + dr,
     });
   }
-  var each = rand(3, 9);
-  var groups = rand(3, 8);
-  var total = each * groups;
+  if (mode === "gap") {
+    var ga = rand(4, 9);
+    var gb = rand(4, 9);
+    var gProd = ga * gb;
+    var gSub = rand(5, 20);
+    return q({
+      topicId: "bang-nhan-chia",
+      level: level,
+      text: ga + " × " + gb + " − " + gSub + " = ?",
+      type: "input",
+      answer: gProd - gSub,
+      explain: ga + " × " + gb + " = " + gProd + "; " + gProd + " − " + gSub + " = " + (gProd - gSub),
+    });
+  }
+  if (mode === "wordMul") {
+    var wGap = rand(2, 5);
+    var wSmall = rand(6, 15);
+    var wBig = wSmall * wGap;
+    return q({
+      topicId: "bang-nhan-chia",
+      level: level,
+      text: "Anh có số bi gấp " + wGap + " lần em. Em có " + wSmall + " viên bi. Hỏi anh có bao nhiêu viên bi?",
+      type: "input",
+      answer: wBig,
+      explain: wSmall + " × " + wGap + " = " + wBig,
+    });
+  }
+  // compare: so sánh hai tích
+  var cA = rand(3, 9);
+  var cB = rand(3, 9);
+  var cC = rand(3, 9);
+  var cD = rand(3, 9);
+  var cLeft = cA * cB;
+  var cRight = cC * cD;
+  var cAns = cLeft > cRight ? ">" : cLeft < cRight ? "<" : "=";
   return q({
     topicId: "bang-nhan-chia",
     level: level,
-    text: "Có " + total + " cái kẹo chia đều vào " + groups + " hộp. Mỗi hộp có bao nhiêu cái?",
+    text: cA + " × " + cB + "  ___  " + cC + " × " + cD,
     type: "mc",
-    options: numMc(each, 4),
-    answer: each,
-    explain: total + " : " + groups + " = " + each,
+    options: [">", "<", "="],
+    answer: cAns,
+    explain: (cA * cB) + " " + cAns + " " + (cC * cD),
   });
 }
 
@@ -2962,22 +3042,22 @@ function genNhanChiaLon(level) {
     });
   }
 
-  var mode = pick(["mul", "div", "mul3", "remain"]);
-  if (mode === "mul") {
-    var m1 = rand(23, 86);
-    var m2 = rand(3, 8);
+  var mode = pick(["mul3dig", "div3dig", "mulAdd", "remain", "wordBig", "findDiv"]);
+  if (mode === "mul3dig") {
+    var m1 = rand(102, 498);
+    var m2 = rand(3, 9);
     return q({
       topicId: "nhan-chia-lon",
       level: level,
       text: m1 + " × " + m2 + " = ?",
       type: "input",
       answer: m1 * m2,
-      explain: m1 + " × " + m2 + " = " + m1 * m2,
+      explain: m1 + " × " + m2 + " = " + (m1 * m2),
     });
   }
-  if (mode === "div") {
-    var d2 = rand(3, 8);
-    var dq = rand(15, 48);
+  if (mode === "div3dig") {
+    var d2 = rand(3, 9);
+    var dq = rand(50, 150);
     var d1 = d2 * dq;
     return q({
       topicId: "nhan-chia-lon",
@@ -2988,29 +3068,63 @@ function genNhanChiaLon(level) {
       explain: d1 + " : " + d2 + " = " + dq,
     });
   }
-  if (mode === "mul3") {
-    var a3 = rand(102, 245);
-    var b3 = rand(2, 5);
+  if (mode === "mulAdd") {
+    var maA = rand(25, 99);
+    var maB = rand(3, 7);
+    var maC = rand(20, 80);
+    var maD = rand(2, 6);
+    var maAns = maA * maB + maC * maD;
     return q({
       topicId: "nhan-chia-lon",
       level: level,
-      text: a3 + " × " + b3 + " = ?",
+      text: maA + " × " + maB + " + " + maC + " × " + maD + " = ?",
       type: "input",
-      answer: a3 * b3,
-      explain: a3 + " × " + b3 + " = " + a3 * b3,
+      answer: maAns,
+      explain: maA + " × " + maB + " = " + (maA * maB) + "; " + maC + " × " + maD + " = " + (maC * maD) + "; tổng = " + maAns,
     });
   }
-  var rb = rand(3, 7);
-  var rq = rand(10, 25);
-  var rr = rand(1, rb - 1);
-  var ra = rb * rq + rr;
+  if (mode === "remain") {
+    var rb = rand(4, 9);
+    var rq = rand(30, 80);
+    var rr = rand(1, rb - 1);
+    var ra = rb * rq + rr;
+    return q({
+      topicId: "nhan-chia-lon",
+      level: level,
+      text: "Chia " + ra + " cho " + rb + ". Số dư là bao nhiêu?",
+      type: "input",
+      answer: rr,
+      explain: ra + " = " + rb + " × " + rq + " + " + rr + " → dư " + rr,
+    });
+  }
+  if (mode === "wordBig") {
+    var boxes = rand(3, 8);
+    var perBox = rand(24, 65);
+    var extra = rand(12, 45);
+    var wbAns = boxes * perBox + extra;
+    return q({
+      topicId: "nhan-chia-lon",
+      level: level,
+      text:
+        "Kho có " + boxes + " thùng, mỗi thùng " + perBox +
+        " quyển sách, ngoài ra còn " + extra +
+        " quyển lẻ. Tất cả có bao nhiêu quyển sách?",
+      type: "input",
+      answer: wbAns,
+      explain: boxes + " × " + perBox + " + " + extra + " = " + wbAns,
+    });
+  }
+  // findDiv: tìm số bị chia
+  var fdDiv = rand(4, 9);
+  var fdQ = rand(30, 99);
+  var fdN = fdDiv * fdQ;
   return q({
     topicId: "nhan-chia-lon",
     level: level,
-    text: "Chia " + ra + " cho " + rb + ". Thương là bao nhiêu? (không hỏi số dư)",
+    text: "Một số chia cho " + fdDiv + " được " + fdQ + ". Số đó là bao nhiêu?",
     type: "input",
-    answer: rq,
-    explain: ra + " = " + rb + " × " + rq + " + " + rr + " → thương " + rq,
+    answer: fdN,
+    explain: fdQ + " × " + fdDiv + " = " + fdN,
   });
 }
 
@@ -5113,63 +5227,104 @@ function genDoLuong(level) {
     });
   }
 
-  var modeA = pick(["time2", "money2", "length2", "mix"]);
-  if (modeA === "time2") {
-    var h2 = rand(1, 3);
-    var m2 = rand(10, 50);
+  var modeA = pick(["timeReverse", "moneyChange", "compareUnit", "timeDuration", "lengthCompare", "massWord"]);
+  if (modeA === "timeReverse") {
+    var totalMin = rand(65, 250);
+    var rh = Math.floor(totalMin / 60);
+    var rm = totalMin % 60;
     return q({
       topicId: "do-luong",
       level: level,
-      text: h2 + " giờ " + m2 + " phút = ? phút",
+      text: totalMin + " phút = ? giờ ? phút. Số phút lẻ là bao nhiêu?",
       type: "input",
-      answer: h2 * 60 + m2,
-      explain: h2 + "×60 + " + m2 + " = " + (h2 * 60 + m2) + " phút",
+      answer: rm,
+      explain: totalMin + " phút = " + rh + " giờ " + rm + " phút (" + rh + " × 60 = " + (rh * 60) + "; lẻ " + rm + " phút)",
     });
   }
-  if (modeA === "money2") {
-    var price = rand(15, 45) * 1000;
-    var qty = rand(2, 5);
+  if (modeA === "moneyChange") {
+    var items = rand(2, 4);
+    var priceItem = rand(8, 25) * 1000;
+    var totalPay = (items * priceItem) + rand(5, 30) * 1000;
+    totalPay = Math.ceil(totalPay / 10000) * 10000; // làm tròn lên chục nghìn
+    var totalCost = items * priceItem;
+    var change = totalPay - totalCost;
     return q({
       topicId: "do-luong",
       level: level,
       text:
-        "Một quyển vở giá " +
-        price.toLocaleString("vi-VN") +
-        " đồng. Mua " +
-        qty +
-        " quyển hết bao nhiêu đồng?",
+        "Mua " + items + " quyển vở, mỗi quyển giá " +
+        priceItem.toLocaleString("vi-VN") + " đồng. Đưa " +
+        totalPay.toLocaleString("vi-VN") + " đồng. Được trả lại bao nhiêu đồng?",
       type: "input",
-      answer: price * qty,
-      explain: price + " × " + qty + " = " + price * qty,
+      answer: change,
+      explain: items + " × " + priceItem + " = " + totalCost + "; thối " + totalPay + " − " + totalCost + " = " + change,
     });
   }
-  if (modeA === "length2") {
-    var lm = rand(2, 6);
-    var lcm = rand(10, 90);
+  if (modeA === "compareUnit") {
+    var kg1 = rand(1, 5);
+    var g1 = rand(100, 900);
+    var totalG1 = kg1 * 1000 + g1;
+    var totalG2 = rand(1500, 6000);
+    var cmpAns = totalG1 > totalG2 ? ">" : totalG1 < totalG2 ? "<" : "=";
     return q({
       topicId: "do-luong",
       level: level,
-      text: lm + " m " + lcm + " cm = ? cm",
-      type: "input",
-      answer: lm * 100 + lcm,
-      explain: lm + " m = " + lm * 100 + " cm, cộng " + lcm + " cm = " + (lm * 100 + lcm) + " cm",
+      text: kg1 + " kg " + g1 + " g  ___  " + totalG2.toLocaleString("vi-VN") + " g",
+      type: "mc",
+      options: [">", "<", "="],
+      answer: cmpAns,
+      explain: kg1 + " kg " + g1 + " g = " + totalG1 + " g; " + totalG1 + " " + cmpAns + " " + totalG2,
     });
   }
-  var startH = rand(7, 10);
-  var add = pick([1, 2, 3]);
+  if (modeA === "timeDuration") {
+    var startH = rand(7, 11);
+    var startM = pick([0, 15, 20, 30, 45]);
+    var durH = rand(1, 3);
+    var durM = pick([15, 20, 25, 30, 40, 45]);
+    var endTotalMin = startH * 60 + startM + durH * 60 + durM;
+    var endH = Math.floor(endTotalMin / 60);
+    var endM = endTotalMin % 60;
+    return q({
+      topicId: "do-luong",
+      level: level,
+      text:
+        "Bé bắt đầu học lúc " + startH + " giờ " + (startM > 0 ? startM + " phút" : "") +
+        ", học trong " + durH + " giờ " + durM + " phút. Bé học xong lúc mấy giờ? (nhập số giờ)",
+      type: "input",
+      answer: endH,
+      explain: startH + "h" + (startM || "00") + " + " + durH + "h" + durM + " = " + endH + "h" + (endM < 10 ? "0" : "") + endM,
+    });
+  }
+  if (modeA === "lengthCompare") {
+    var m1 = rand(2, 8);
+    var cm1 = rand(10, 90);
+    var totalCm1 = m1 * 100 + cm1;
+    var totalCm2 = rand(200, 900);
+    var lcAns = totalCm1 > totalCm2 ? ">" : totalCm1 < totalCm2 ? "<" : "=";
+    return q({
+      topicId: "do-luong",
+      level: level,
+      text: m1 + " m " + cm1 + " cm  ___  " + totalCm2 + " cm",
+      type: "mc",
+      options: [">", "<", "="],
+      answer: lcAns,
+      explain: m1 + " m " + cm1 + " cm = " + totalCm1 + " cm; " + totalCm1 + " " + lcAns + " " + totalCm2,
+    });
+  }
+  // massWord: bài toán cân nặng nhiều bước
+  var bags = rand(3, 6);
+  var perBag = rand(2, 8);
+  var eaten = rand(1, 5);
+  var massAns = bags * perBag - eaten;
   return q({
     topicId: "do-luong",
     level: level,
     text:
-      "Bắt đầu học lúc " +
-      startH +
-      " giờ, học trong " +
-      add +
-      " giờ. Kết thúc lúc mấy giờ?",
-    type: "mc",
-    options: numMc(startH + add, 2),
-    answer: startH + add,
-    explain: startH + " + " + add + " = " + (startH + add) + " giờ",
+      "Có " + bags + " túi cam, mỗi túi nặng " + perBag +
+      " kg. Sau khi lấy ra " + eaten + " kg cam thì còn bao nhiêu kg?",
+    type: "input",
+    answer: massAns,
+    explain: bags + " × " + perBag + " − " + eaten + " = " + massAns + " kg",
   });
 }
 
@@ -5431,91 +5586,105 @@ function genToanLoi(level) {
     });
   }
 
-  var modeA = pick(["twoStep", "remain", "compare", "farm"]);
-  if (modeA === "twoStep") {
-    var a = rand(20, 40);
-    var b = rand(15, 30);
-    var boxes = rand(3, 5);
+  var modeA = pick(["threeStep", "buyGive", "gap", "multiCompare", "mixed", "fraction"]);
+  if (modeA === "threeStep") {
+    var boxes = rand(3, 6);
+    var perBox = rand(10, 24);
+    var eaten = rand(8, 20);
+    var given = rand(5, 15);
+    var tsAns = boxes * perBox - eaten - given;
     return q({
       topicId: "toan-loi",
       level: level,
       text:
-        "Một hộp có " +
-        a +
-        " cái kẹo đỏ và " +
-        b +
-        " cái kẹo xanh. " +
-        boxes +
-        " hộp như vậy có tất cả bao nhiêu cái kẹo?",
+        "Mẹ mua " + boxes + " hộp bánh, mỗi hộp có " + perBox +
+        " cái. Bé ăn " + eaten + " cái, cho bạn " + given +
+        " cái. Hỏi còn lại bao nhiêu cái bánh?",
       type: "input",
-      answer: (a + b) * boxes,
-      explain:
-        "Mỗi hộp " +
-        (a + b) +
-        " cái; " +
-        boxes +
-        " hộp: " +
-        (a + b) +
-        " × " +
-        boxes +
-        " = " +
-        (a + b) * boxes,
+      answer: tsAns,
+      explain: boxes + " × " + perBox + " = " + (boxes * perBox) + "; " + (boxes * perBox) + " − " + eaten + " − " + given + " = " + tsAns,
     });
   }
-  if (modeA === "remain") {
-    var total = rand(50, 120);
-    var used = rand(15, total - 20);
-    var more = rand(5, 15);
+  if (modeA === "buyGive") {
+    var price = rand(8, 25);
+    var qty = rand(3, 7);
+    var money = price * qty + rand(10, 40);
+    var changeAns = money - price * qty;
     return q({
       topicId: "toan-loi",
       level: level,
       text:
-        "Thùng có " +
-        total +
-        " quả cam, lấy ra " +
-        used +
-        " quả, rồi bỏ thêm " +
-        more +
-        " quả. Hiện có bao nhiêu quả?",
+        "Mỗi quyển vở giá " + price + " 000 đồng. Mua " + qty +
+        " quyển, đưa " + money + " 000 đồng. Được trả lại bao nhiêu nghìn đồng?",
       type: "input",
-      answer: total - used + more,
-      explain: total + " − " + used + " + " + more + " = " + (total - used + more),
+      answer: changeAns,
+      explain: qty + " × " + price + " = " + (price * qty) + "; thối " + money + " − " + (price * qty) + " = " + changeAns,
     });
   }
-  if (modeA === "compare") {
-    var small = rand(18, 40);
-    var more2 = rand(8, 20);
+  if (modeA === "gap") {
+    var gap = rand(2, 5);
+    var smaller = rand(15, 40);
+    var bigger = smaller * gap;
+    var sumBoth = smaller + bigger;
     return q({
       topicId: "toan-loi",
       level: level,
       text:
-        "Lan có " +
-        small +
-        " nhãn vở. Minh có nhiều hơn Lan " +
-        more2 +
-        " nhãn. Minh có bao nhiêu nhãn?",
+        "Anh có số bi gấp " + gap + " lần em. Em có " + smaller +
+        " viên bi. Hỏi cả hai anh em có tất cả bao nhiêu viên bi?",
       type: "input",
-      answer: small + more2,
-      explain: small + " + " + more2 + " = " + (small + more2),
+      answer: sumBoth,
+      explain: "Anh: " + smaller + " × " + gap + " = " + bigger + "; tổng: " + smaller + " + " + bigger + " = " + sumBoth,
     });
   }
-  var rows = rand(4, 8);
-  var per = rand(6, 12);
-  var extra = rand(3, 10);
+  if (modeA === "multiCompare") {
+    var personA = rand(30, 80);
+    var lessB = rand(10, 25);
+    var personB = personA - lessB;
+    var moreC = rand(5, 20);
+    var personC = personB + moreC;
+    return q({
+      topicId: "toan-loi",
+      level: level,
+      text:
+        "An có " + personA + " nhãn vở. Bình ít hơn An " + lessB +
+        " nhãn. Chi nhiều hơn Bình " + moreC + " nhãn. Hỏi Chi có bao nhiêu nhãn vở?",
+      type: "input",
+      answer: personC,
+      explain: "Bình: " + personA + " − " + lessB + " = " + personB + "; Chi: " + personB + " + " + moreC + " = " + personC,
+    });
+  }
+  if (modeA === "mixed") {
+    var students = rand(4, 8);
+    var pencils = rand(3, 6);
+    var erasers = rand(2, 4);
+    var totalItems = students * pencils + students * erasers;
+    return q({
+      topicId: "toan-loi",
+      level: level,
+      text:
+        "Cô giáo phát cho mỗi bạn " + pencils + " bút chì và " + erasers +
+        " cục tẩy. Lớp có " + students + " bạn. Cô cần tất cả bao nhiêu đồ dùng?",
+      type: "input",
+      answer: totalItems,
+      explain: students + " × " + pencils + " + " + students + " × " + erasers + " = " + (students * pencils) + " + " + (students * erasers) + " = " + totalItems,
+    });
+  }
+  // fraction word problem
+  var fTotal = pick([24, 30, 36, 40, 48, 60]);
+  var fDiv = pick([2, 3, 4, 5, 6]);
+  while (fTotal % fDiv !== 0) fDiv = pick([2, 3, 4, 5, 6]);
+  var fPart = fTotal / fDiv;
+  var fRemain = fTotal - fPart;
   return q({
     topicId: "toan-loi",
     level: level,
     text:
-      "Vườn có " +
-      rows +
-      " hàng cây, mỗi hàng " +
-      per +
-      " cây, ngoài ra còn " +
-      extra +
-      " cây trồng thêm. Tất cả bao nhiêu cây?",
+      "Có " + fTotal + " quả táo. Cho bạn 1/" + fDiv +
+      " số táo đó. Hỏi còn lại bao nhiêu quả?",
     type: "input",
-    answer: rows * per + extra,
-    explain: rows + " × " + per + " + " + extra + " = " + (rows * per + extra),
+    answer: fRemain,
+    explain: "Cho: " + fTotal + " : " + fDiv + " = " + fPart + "; còn: " + fTotal + " − " + fPart + " = " + fRemain,
   });
 }
 
