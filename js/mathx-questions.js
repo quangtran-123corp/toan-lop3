@@ -2328,35 +2328,117 @@
   }
 
   function genChia2ChuSo(week, level) {
-    var b = level === "advanced" ? rand(3, 8) : rand(2, 6);
-    var qv = rand(11, 35);
-    var a = b * qv;
-    if (level === "advanced" && Math.random() < 0.4) {
-      var r = rand(1, b - 1);
-      a = b * qv + r;
+    /* Tuần 11: Chia số có HAI CHỮ SỐ (10–99) cho số có một chữ số.
+       - Cơ bản: phép chia hết (dư = 0)
+       - Nâng cao: phép chia có dư + nhận biết chia hết vs chia dư */
+    var b = rand(2, 9);
+    if (level === "basic") {
+      // Chia hết — thương cũng phải là 1 chữ số (2–9) để số bị chia ≤ 81
+      var qv = rand(2, Math.min(9, Math.floor(99 / b)));
+      var a = b * qv;
+      var mode = pick(["plain", "word"]);
+      if (mode === "word") {
+        var item = pick(["viên kẹo", "quả táo", "bông hoa", "quyển vở"]);
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: "Có " + a + " " + item + " chia đều cho " + b + " bạn. Mỗi bạn được bao nhiêu?",
+          type: "mc",
+          options: numMc(qv, 4),
+          answer: qv,
+          explainSteps: [
+            a + " : " + b + " = " + qv + ".",
+            "Phép chia hết (dư 0).",
+          ],
+        });
+      }
       return q({
         topicId: tid(week),
         level: level,
         week: week,
-        text: "Chia " + a + " : " + b + ". Thương là? (không hỏi số dư)",
-        type: "input",
+        text: a + " : " + b + " = ?",
+        type: "mc",
+        options: numMc(qv, 4),
         answer: qv,
-        explainSteps: [
-          a + " = " + b + " × " + qv + " + " + r + ".",
-          "Thương = " + qv + ", số dư = " + r + ".",
-        ],
-        explainTip: "Chia có dư: số bị chia = số chia × thương + dư (dư < số chia).",
+        explain: a + " : " + b + " = " + qv + " (chia hết)",
       });
     }
+    // Nâng cao: chia có dư — số bị chia 2 chữ số (10–99)
+    var modeA = pick(["divRem", "findRem", "divExact", "identify"]);
+    if (modeA === "divRem" || modeA === "findRem") {
+      var b2 = rand(3, 9);
+      var q2 = rand(2, Math.min(9, Math.floor(95 / b2)));
+      var r2 = rand(1, b2 - 1);
+      var a2 = b2 * q2 + r2;
+      if (a2 > 99) { q2 = q2 - 1; a2 = b2 * q2 + r2; }
+      if (modeA === "findRem") {
+        return q({
+          topicId: tid(week),
+          level: level,
+          week: week,
+          text: a2 + " : " + b2 + " = ? dư ? — Số dư là bao nhiêu?",
+          type: "input",
+          answer: r2,
+          explainSteps: [
+            a2 + " = " + b2 + " × " + q2 + " + " + r2 + ".",
+            "Thương = " + q2 + ", số dư = " + r2 + ".",
+            "Số dư luôn nhỏ hơn số chia (" + r2 + " < " + b2 + ").",
+          ],
+          explainTip: "Chia có dư: số bị chia = số chia × thương + dư (dư < số chia).",
+        });
+      }
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Chia " + a2 + " cho " + b2 + ". Thương là bao nhiêu? (bỏ qua số dư)",
+        type: "input",
+        answer: q2,
+        explainSteps: [
+          a2 + " = " + b2 + " × " + q2 + " + " + r2 + ".",
+          "Thương = " + q2 + ", số dư = " + r2 + ".",
+        ],
+        explainTip: "Chia có dư: số bị chia = số chia × thương + dư.",
+      });
+    }
+    if (modeA === "divExact") {
+      // Chia hết nhưng tự nhập (khó hơn MC)
+      var b3 = rand(3, 9);
+      var q3 = rand(2, Math.min(9, Math.floor(99 / b3)));
+      var a3 = b3 * q3;
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: a3 + " : " + b3 + " = ?",
+        type: "input",
+        answer: q3,
+        explain: a3 + " : " + b3 + " = " + q3 + " (chia hết, dư 0)",
+      });
+    }
+    // identify: nhận biết chia hết hay chia dư
+    var b4 = rand(2, 9);
+    var q4 = rand(2, Math.min(9, Math.floor(95 / b4)));
+    var hasRem = Math.random() < 0.5;
+    var r4 = hasRem ? rand(1, b4 - 1) : 0;
+    var a4 = b4 * q4 + r4;
+    if (a4 > 99) { q4 = q4 - 1; a4 = b4 * q4 + r4; }
+    var ansId = hasRem ? "Chia có dư" : "Chia hết";
     return q({
       topicId: tid(week),
       level: level,
       week: week,
-      text: a + " : " + b + " = ?",
+      text: "Phép tính " + a4 + " : " + b4 + " là phép chia hết hay chia có dư?",
       type: "mc",
-      options: numMc(qv, 6),
-      answer: qv,
-      explain: a + " : " + b + " = " + qv,
+      options: shuffle(["Chia hết", "Chia có dư"]),
+      answer: ansId,
+      explainSteps: [
+        a4 + " : " + b4 + " = " + q4 + (hasRem ? " dư " + r4 : " (dư 0)") + ".",
+        hasRem
+          ? "Có dư " + r4 + " → phép chia có dư."
+          : "Không còn dư → phép chia hết.",
+      ],
     });
   }
 
