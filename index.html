@@ -8573,9 +8573,14 @@ window.questionKey = questionKey;
       week: week,
       text: "Số " + pair[0] + " viết bằng chữ số La Mã là:",
       type: "mc",
-      options: shuffle([pair[1], "I", "V", "X", "XII", "IV"]).filter(function (v, i, a) {
-        return a.indexOf(v) === i;
-      }).slice(0, 4),
+      options: shuffle(
+        shuffle(["I", "V", "X", "XII", "IV", "VI", "IX"])
+          .filter(function (v) {
+            return v !== pair[1];
+          })
+          .slice(0, 3)
+          .concat([pair[1]])
+      ),
       answer: pair[1],
       explain: pair[0] + " = " + pair[1],
     });
