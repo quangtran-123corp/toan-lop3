@@ -2660,53 +2660,322 @@
     });
   }
 
+  var ROMAN_MAP = [
+    "", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X",
+    "XI", "XII", "XIII", "XIV", "XV", "XVI", "XVII", "XVIII", "XIX", "XX", "XXI",
+  ];
+  function toRoman(n) {
+    return ROMAN_MAP[n];
+  }
+
+  /** 4 lựa chọn: đáp án đúng + 3 số La Mã nhiễu (1–21), không trùng */
+  function romanOptions(correct, near) {
+    var pool = [];
+    for (var i = 1; i <= 21; i++) {
+      if (toRoman(i) !== correct) pool.push(toRoman(i));
+    }
+    var opts = [];
+    (near || []).forEach(function (r) {
+      if (r && r !== correct && opts.indexOf(r) < 0 && pool.indexOf(r) >= 0) opts.push(r);
+    });
+    opts = shuffle(opts).slice(0, 3);
+    shuffle(pool).forEach(function (r) {
+      if (opts.length < 3 && opts.indexOf(r) < 0) opts.push(r);
+    });
+    return shuffle(opts.concat([correct]));
+  }
+
   function genLaMa(week, level) {
-    var map = [
-      [1, "I"],
-      [2, "II"],
-      [3, "III"],
-      [4, "IV"],
-      [5, "V"],
-      [6, "VI"],
-      [7, "VII"],
-      [8, "VIII"],
-      [9, "IX"],
-      [10, "X"],
-      [11, "XI"],
-      [12, "XII"],
-      [20, "XX"],
-      [21, "XXI"],
-    ];
-    var pair = pick(map);
-    if (Math.random() < 0.5) {
+    var kind = rand(1, level === "advanced" ? 7 : 6);
+    var n, r;
+    // 1) Số → chữ số La Mã
+    if (kind === 1) {
+      n = rand(1, 21);
+      r = toRoman(n);
       return q({
         topicId: tid(week),
         level: level,
         week: week,
-        text: "Chữ số La Mã " + pair[1] + " bằng số nào?",
+        text: "Số " + n + " viết bằng chữ số La Mã là:",
         type: "mc",
-        options: numMc(pair[0], 4),
-        answer: pair[0],
-        explain: pair[1] + " = " + pair[0],
+        options: romanOptions(r, [toRoman(n - 1), toRoman(n + 1), toRoman(n + 5)]),
+        answer: r,
+        explain: n + " = " + r,
+      });
+    }
+    // 2) Chữ số La Mã → số
+    if (kind === 2) {
+      n = rand(1, 21);
+      r = toRoman(n);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Chữ số La Mã " + r + " bằng số nào?",
+        type: "mc",
+        options: numMc(n, 4),
+        answer: n,
+        explain: r + " = " + n,
+      });
+    }
+    // 3) Số La Mã liền sau
+    if (kind === 3) {
+      n = rand(1, 20);
+      r = toRoman(n + 1);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Số La Mã liền sau " + toRoman(n) + " là:",
+        type: "mc",
+        options: romanOptions(r, [toRoman(n), toRoman(n + 2), toRoman(n - 1)]),
+        answer: r,
+        explain: toRoman(n) + " = " + n + ", số liền sau là " + (n + 1) + " = " + r,
+      });
+    }
+    // 4) Số La Mã liền trước
+    if (kind === 4) {
+      n = rand(2, 21);
+      r = toRoman(n - 1);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Số La Mã liền trước " + toRoman(n) + " là:",
+        type: "mc",
+        options: romanOptions(r, [toRoman(n), toRoman(n - 2), toRoman(n + 1)]),
+        answer: r,
+        explain: toRoman(n) + " = " + n + ", số liền trước là " + (n - 1) + " = " + r,
+      });
+    }
+    // 5) Đồng hồ ghi số La Mã
+    if (kind === 5) {
+      n = rand(1, 12);
+      r = toRoman(n);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text:
+          "Trên mặt đồng hồ ghi số La Mã, kim giờ chỉ vào số " +
+          r + ", kim phút chỉ vào số XII. Đồng hồ chỉ mấy giờ?",
+        type: "mc",
+        options: numMc(n, 3).map(function (v) {
+          return v + " giờ";
+        }),
+        answer: n + " giờ",
+        explain: r + " = " + n + ", kim phút chỉ XII nên là " + n + " giờ đúng.",
+      });
+    }
+    // 6) Số lớn nhất / bé nhất trong 3 số La Mã
+    if (kind === 6) {
+      var nums = [];
+      while (nums.length < 3) {
+        var v = rand(1, 21);
+        if (nums.indexOf(v) < 0) nums.push(v);
+      }
+      var big = Math.random() < 0.5;
+      var target = big ? Math.max.apply(null, nums) : Math.min.apply(null, nums);
+      var names = nums.map(toRoman);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Trong các số La Mã " + names.join(", ") + ", số nào " + (big ? "lớn nhất?" : "bé nhất?"),
+        type: "mc",
+        options: shuffle(names),
+        answer: toRoman(target),
+        explain: names.map(function (x, i) { return x + " = " + nums[i]; }).join("; ") + ". Số " + (big ? "lớn" : "bé") + " nhất là " + toRoman(target) + ".",
+      });
+    }
+    // 7) Nâng cao: cộng / trừ số La Mã (kết quả 1–21)
+    var a = rand(1, 12);
+    var b = rand(1, 21 - a);
+    var plus = Math.random() < 0.6;
+    var res;
+    var txt;
+    if (plus) {
+      res = a + b;
+      txt = toRoman(a) + " + " + toRoman(b) + " = ? (viết kết quả bằng chữ số La Mã)";
+    } else {
+      var big2 = rand(a + 1, 21);
+      res = big2 - a;
+      txt = toRoman(big2) + " − " + toRoman(a) + " = ? (viết kết quả bằng chữ số La Mã)";
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: txt,
+        type: "mc",
+        options: romanOptions(toRoman(res), [toRoman(res + 1), toRoman(res - 1), toRoman(big2)]),
+        answer: toRoman(res),
+        explain: big2 + " − " + a + " = " + res + " = " + toRoman(res),
       });
     }
     return q({
       topicId: tid(week),
       level: level,
       week: week,
-      text: "Số " + pair[0] + " viết bằng chữ số La Mã là:",
+      text: txt,
       type: "mc",
-      options: shuffle(
-        shuffle(["I", "V", "X", "XII", "IV", "VI", "IX"])
-          .filter(function (v) {
-            return v !== pair[1];
-          })
-          .slice(0, 3)
-          .concat([pair[1]])
-      ),
-      answer: pair[1],
-      explain: pair[0] + " = " + pair[1],
+      options: romanOptions(toRoman(res), [toRoman(res + 1), toRoman(res - 1), toRoman(a)]),
+      answer: toRoman(res),
+      explain: a + " + " + b + " = " + res + " = " + toRoman(res),
     });
+  }
+
+  /** Làm tròn số tự nhiên tới bội của unit (5 trở lên làm tròn lên) */
+  function roundTo(n, unit) {
+    return Math.floor((n + unit / 2) / unit) * unit;
+  }
+
+  /** 4 lựa chọn cho câu làm tròn: đáp án, hướng làm tròn ngược lại, và các bội lân cận */
+  function roundOptions(n, unit) {
+    var ans = roundTo(n, unit);
+    var lo = Math.floor(n / unit) * unit;
+    var hi = lo + unit;
+    var opts = [ans, ans === lo ? hi : lo];
+    [lo - unit, hi + unit, hi + 2 * unit].forEach(function (v) {
+      if (opts.length < 4 && v > 0 && opts.indexOf(v) < 0) opts.push(v);
+    });
+    return shuffle(opts.map(String));
+  }
+
+  var ROUND_CONTEXTS = [
+    ["Một cửa hàng có", "quyển vở"],
+    ["Trường em có", "học sinh"],
+    ["Thư viện có", "quyển sách"],
+    ["Một nhà máy sản xuất được", "chiếc bút"],
+    ["Một xe tải chở", "ki-lô-gam gạo"],
+    ["Bác nông dân thu hoạch được", "quả cam"],
+    ["Sân vận động có", "khán giả"],
+    ["Một siêu thị bán được", "chai nước"],
+    ["Một trang trại nuôi", "con gà"],
+    ["Một cuốn truyện dày", "trang"],
+  ];
+
+  /** Làm tròn đến hàng trăm (unit = 100) hoặc hàng nghìn (unit = 1000) */
+  function genRound(week, level, unit) {
+    var isThou = unit === 1000;
+    var unitName = isThou ? "hàng nghìn" : "hàng trăm";
+    var lookName = isThou ? "hàng trăm" : "hàng chục";
+    var adv = level === "advanced";
+    function randN(noTie) {
+      var lo = isThou ? 1001 : adv ? 1001 : 101;
+      var hi = isThou ? (adv ? 9999 : 9499) : adv ? 9999 : 999;
+      var n;
+      do {
+        n = rand(lo, hi);
+      } while (n % unit === 0 || (noTie && n % unit === unit / 2));
+      return n;
+    }
+    function steps(n) {
+      var d = Math.floor(n / (unit / 10)) % 10;
+      var r = roundTo(n, unit);
+      return [
+        "Nhìn chữ số " + lookName + " của " + n + " là " + d + ".",
+        d >= 5
+          ? d + " ≥ 5 nên làm tròn lên: " + n + " ≈ " + r + "."
+          : d + " < 5 nên làm tròn xuống: " + n + " ≈ " + r + ".",
+      ];
+    }
+    var kind = rand(1, adv ? 5 : 4);
+    var n, r;
+    // 1) Làm tròn trực tiếp
+    if (kind === 1) {
+      n = randN(false);
+      r = roundTo(n, unit);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Làm tròn " + n + " đến " + unitName + ":",
+        type: "mc",
+        options: roundOptions(n, unit),
+        answer: r,
+        explainSteps: steps(n),
+      });
+    }
+    // 2) Bài toán có lời văn
+    if (kind === 2) {
+      n = randN(false);
+      r = roundTo(n, unit);
+      var c = pick(ROUND_CONTEXTS);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text:
+          c[0] + " " + n + " " + c[1] + ". Làm tròn số " + n + " đến " + unitName +
+          ", ta được khoảng bao nhiêu " + c[1] + "?",
+        type: "mc",
+        options: roundOptions(n, unit),
+        answer: r,
+        explainSteps: steps(n),
+      });
+    }
+    // 3) Tìm số làm tròn ra kết quả cho trước
+    if (kind === 3) {
+      var R = (isThou ? rand(2, 9) : rand(2, 90)) * unit;
+      var inRange = R - unit / 2 + rand(0, unit - 1);
+      var opts = [inRange];
+      var g = 0;
+      while (opts.length < 4 && g++ < 200) {
+        var off = rand(unit / 2, unit * 3 / 2);
+        var v = Math.random() < 0.5 ? R + off : R - off;
+        if (v > 0 && roundTo(v, unit) !== R && opts.indexOf(v) < 0) opts.push(v);
+      }
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Số nào sau đây khi làm tròn đến " + unitName + " được " + R + "?",
+        type: "mc",
+        options: shuffle(opts.map(String)),
+        answer: inRange,
+        explain: inRange + " làm tròn đến " + unitName + " được " + R + ".",
+      });
+    }
+    // 4) Số tròn gần nhất
+    if (kind === 4) {
+      n = randN(true);
+      r = roundTo(n, unit);
+      return q({
+        topicId: tid(week),
+        level: level,
+        week: week,
+        text: "Số tròn " + (isThou ? "nghìn" : "trăm") + " gần nhất với " + n + " là:",
+        type: "mc",
+        options: roundOptions(n, unit),
+        answer: r,
+        explainSteps: steps(n),
+      });
+    }
+    // 5) Nâng cao: làm tròn hai số rồi cộng
+    var n1 = randN(false);
+    var n2 = randN(false);
+    var sum = roundTo(n1, unit) + roundTo(n2, unit);
+    return q({
+      topicId: tid(week),
+      level: level,
+      week: week,
+      text: "Làm tròn " + n1 + " và " + n2 + " đến " + unitName + " rồi tính tổng hai số đã làm tròn.",
+      type: "mc",
+      options: shuffle([sum, sum + unit, sum - unit, sum + 2 * unit].map(String)),
+      answer: sum,
+      explainSteps: [
+        n1 + " ≈ " + roundTo(n1, unit) + "; " + n2 + " ≈ " + roundTo(n2, unit) + ".",
+        roundTo(n1, unit) + " + " + roundTo(n2, unit) + " = " + sum + ".",
+      ],
+    });
+  }
+
+  function genLamTronTram(week, level) {
+    return genRound(week, level, 100);
+  }
+
+  function genLamTronNghin(week, level) {
+    return genRound(week, level, 1000);
   }
 
   function genLamTron(week, level) {
@@ -3039,7 +3308,7 @@
       ],
       18: [genHinhPhangKhoi, genChuVi, genTrungDiem, genGoc, genHinhTron, genMmGam],
       19: [genSo10000],
-      20: [genLaMa, genLamTron],
+      20: [genLaMa, genLamTronTram, genLamTronNghin, genLamTron],
       21: [genChuVi, genDienTich],
       22: [genDienTich],
       23: [genCongTru10000],
